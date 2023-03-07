@@ -49,5 +49,7 @@
 	<true/>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>photo library permission required to pick which one to do watermarking</string>
+	<key>NSCameraUsageDescription</key>
+	<string>camera permission required to take picture to do watermarking</string>
 </dict>
 </plist>
