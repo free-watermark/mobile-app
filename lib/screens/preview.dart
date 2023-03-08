@@ -5,6 +5,7 @@ import 'dart:convert' as cvrt;
 import 'dart:async' as asyncx;
 
 import 'package:image/image.dart' as img;
+import 'package:nanoid/nanoid.dart' as nid;
 import 'package:flutter/material.dart' as fm;
 import 'package:file_picker/file_picker.dart' as fp;
 import 'package:image_picker/image_picker.dart' as imgp;
@@ -22,16 +23,16 @@ class PreviewScreen extends fm.StatefulWidget {
 
 class _PreviewScreenState extends fm.State<PreviewScreen> {
   final isl.ReceivePort _mainThreadReceiver = isl.ReceivePort();
-
   final asyncx.StreamController<String> _workerResponse = asyncx.StreamController<String>();
 
+  late final io.Directory _workingDir;
+  late final String _workingFileTempId;
+  late final fi.FlutterIsolate _workerThread;
   late final isl.SendPort _workerThreadSendPort;
 
-  late final fi.FlutterIsolate _workerThread;
-
-  fm.Widget _featureButton(fm.Widget icon) {
+  fm.Widget _featureButton(fm.Widget icon, Function() func) {
     return fm.GestureDetector(
-      onTap: () {},
+      onTap: func,
       child: icon,
     );
   }
@@ -43,6 +44,8 @@ class _PreviewScreenState extends fm.State<PreviewScreen> {
     fi.FlutterIsolate.spawn(readAndRotateImage, _mainThreadReceiver.sendPort).then((t) async {
       _workerThread = t;
 
+      _workingDir = await pd.getTemporaryDirectory();
+
       _mainThreadReceiver.listen((msg) {
         if (msg is isl.SendPort) {
           _workerThreadSendPort = msg;
@@ -52,6 +55,10 @@ class _PreviewScreenState extends fm.State<PreviewScreen> {
             : (widget.imageFile as fp.FilePickerResult).paths[0]!));
 
           _workerThreadSendPort.send('image@read-rotate.$imgPath');
+        }
+
+        if (msg is String && msg.contains('working-file-temp-id@set.')) {
+          _workingFileTempId = msg.split('.')[1];
         }
 
         if (msg is String) {
@@ -104,9 +111,16 @@ class _PreviewScreenState extends fm.State<PreviewScreen> {
               child: fm.StreamBuilder<String>(
                 stream: _workerResponse.stream,
                 builder: (context, snapshot) {
-                  if (snapshot.hasData && snapshot.data!.contains('image@read-rotate:done.')) {
-                    return fm.Image.file(io.File(
-                      String.fromCharCodes(cvrt.base64Decode(snapshot.data!.split('.')[1]))));
+                  if (snapshot.hasData) {
+                    switch (snapshot.data!) {
+                      case 'image@read-rotate:done': {
+                        return fm.Image.file(io.File('${_workingDir.path}/$_workingFileTempId'));
+                      }
+
+                      case 'image@grayscale:done': {
+                        return fm.Image.file(io.File('${_workingDir.path}/$_workingFileTempId-grayscale'));
+                      }
+                    }
                   }
 
                   return const fm.Text('opening image', style: fm.TextStyle(fontSize: 16, color: fm.Color(0xffffffff)));
@@ -132,23 +146,25 @@ class _PreviewScreenState extends fm.State<PreviewScreen> {
                   _featureButton(const fm.Padding(
                     padding: fm.EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     child: fm.Icon(fm.Icons.font_download, size: 32, color: fm.Color(0xffffffff)),
-                  )),
+                  ), () {}),
                   _featureButton(const fm.Padding(
                     padding: fm.EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     child: fm.Icon(fm.Icons.opacity, size: 32, color: fm.Color(0xffffffff)),
-                  )),
+                  ), () {}),
                   _featureButton(const fm.Padding(
                     padding: fm.EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     child: fm.Icon(fm.Icons.rotate_left, size: 32, color: fm.Color(0xffffffff)),
-                  )),
+                  ), () {}),
                   _featureButton(const fm.Padding(
                     padding: fm.EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     child: fm.Icon(fm.Icons.zoom_in_map_rounded, size: 32, color: fm.Color(0xffffffff)),
-                  )),
+                  ), () {}),
                   _featureButton(const fm.Padding(
                     padding: fm.EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     child: fm.Icon(fm.Icons.brightness_medium_outlined, size: 32, color: fm.Color(0xffffffff)),
-                  )),
+                  ), () {
+                    _workerThreadSendPort.send('image@grayscale');
+                  }),
                 ],
               ),
             ),
@@ -160,30 +176,43 @@ class _PreviewScreenState extends fm.State<PreviewScreen> {
 }
 
 @pragma('vm:entry-point')
-void readAndRotateImage(isl.SendPort sendPort) {
+Future<void> readAndRotateImage(isl.SendPort sendPort) async {
   final isl.ReceivePort workerThreadReceiver = isl.ReceivePort();
 
   sendPort.send(workerThreadReceiver.sendPort);
+
+  img.Image? image;
+
+  final String tempId = nid.nanoid(16);
+  final io.Directory tempDir = await pd.getTemporaryDirectory();
+
+  sendPort.send('working-file-temp-id@set.$tempId');
 
   workerThreadReceiver.listen((message) async {
     if (message is String && message.contains('image@read-rotate.')) {
       final String imgPath = String.fromCharCodes(cvrt.base64Decode(message.split('.')[1]));
 
-      final img.Image? image = await img.decodeImageFile(imgPath);
-
-      final io.Directory tempDir = await pd.getTemporaryDirectory();
+      image = await img.decodeImageFile(imgPath);
 
       if (image != null) {
-        if (image.width > image.height) {
-          await img.encodeJpgFile('${tempDir.path}/working', img.copyRotate(image, angle: -90));
+        if (image!.width > image!.height) {
+          image = img.copyRotate(image!, angle: -90);
+
+          await img.encodeJpgFile('${tempDir.path}/$tempId', image!);
         } else {
-          await img.encodeJpgFile('${tempDir.path}/working', image);
+          await img.encodeJpgFile('${tempDir.path}/$tempId', image!);
         }
 
-        final String data = cvrt.base64Encode(cvrt.utf8.encode('${tempDir.path}/working'));
-
-        sendPort.send('image@read-rotate:done.$data');
+        sendPort.send('image@read-rotate:done');
       }
     }
-  }); 
+
+    if (message is String && message == 'image@grayscale') {
+      if (image != null) {
+        await img.encodeJpgFile('${tempDir.path}/$tempId-grayscale', img.grayscale(image!));
+
+        sendPort.send('image@grayscale:done');
+      }
+    }
+  });
 }
