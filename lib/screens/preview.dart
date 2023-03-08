@@ -1,14 +1,15 @@
 
-import 'dart:ui' as ui;
-import 'dart:typed_data' as td;
+import 'dart:io' as io;
+import 'dart:isolate' as isl;
+import 'dart:convert' as cvrt;
+import 'dart:async' as asyncx;
 
 import 'package:image/image.dart' as img;
 import 'package:flutter/material.dart' as fm;
-import 'package:flutter/foundation.dart' as ff;
 import 'package:file_picker/file_picker.dart' as fp;
 import 'package:image_picker/image_picker.dart' as imgp;
-
-import '../utils/image.dart';
+import 'package:path_provider/path_provider.dart' as pd;
+import 'package:flutter_isolate/flutter_isolate.dart' as fi;
 
 class PreviewScreen extends fm.StatefulWidget {
   final dynamic imageFile;
@@ -20,33 +21,54 @@ class PreviewScreen extends fm.StatefulWidget {
 }
 
 class _PreviewScreenState extends fm.State<PreviewScreen> {
-  late img.Image _image;
+  final isl.ReceivePort _mainThreadReceiver = isl.ReceivePort();
 
-  Future<img.Image?> _getImageFile() async {
-    img.Image? image = await img.decodeImageFile(
-      widget.imageFile is imgp.XFile
-        ? (widget.imageFile as imgp.XFile).path
-        : (widget.imageFile as fp.FilePickerResult).paths[0]!
-    );
+  final asyncx.StreamController<String> _workerResponse = asyncx.StreamController<String>();
 
-    if (image == null) {
-      return null;
-    }
+  late final isl.SendPort _workerThreadSendPort;
 
-    if (image.width > image.height) {
-      _image = img.copyRotate(image, angle: -90);
-    } else {
-      _image = image;
-    }
-
-    return _image;
-  }
+  late final fi.FlutterIsolate _workerThread;
 
   fm.Widget _featureButton(fm.Widget icon) {
     return fm.GestureDetector(
       onTap: () {},
       child: icon,
     );
+  }
+
+  @override
+  void initState() {
+    super.initState();
+
+    fi.FlutterIsolate.spawn(readAndRotateImage, _mainThreadReceiver.sendPort).then((t) async {
+      _workerThread = t;
+
+      _mainThreadReceiver.listen((msg) {
+        if (msg is isl.SendPort) {
+          _workerThreadSendPort = msg;
+
+          final String imgPath = cvrt.base64Encode(cvrt.utf8.encode(widget.imageFile is imgp.XFile
+            ? (widget.imageFile as imgp.XFile).path
+            : (widget.imageFile as fp.FilePickerResult).paths[0]!));
+
+          _workerThreadSendPort.send('image@read-rotate.$imgPath');
+        }
+
+        if (msg is String) {
+          _workerResponse.sink.add(msg);
+        }
+      }); 
+    });
+  }
+
+  @override
+  void dispose() {
+    _workerThread.kill();
+
+    _mainThreadReceiver.close();
+    _workerResponse.close();
+
+    super.dispose();
   }
 
   @override
@@ -79,29 +101,12 @@ class _PreviewScreenState extends fm.State<PreviewScreen> {
               color: fm.Color(0xff000000),
             ),
             child: fm.Center(
-              child: fm.FutureBuilder<img.Image?>(
-                future: _getImageFile(),
+              child: fm.StreamBuilder<String>(
+                stream: _workerResponse.stream,
                 builder: (context, snapshot) {
-                  if (snapshot.hasData && snapshot.data != null) {
-                    return fm.FutureBuilder<ui.Image>(
-                      future: convertImageToFlutterUi(snapshot.data!),
-                      builder: (context, snapshot) {
-                        if (snapshot.hasData) {
-                          return fm.FutureBuilder<td.ByteData?>(
-                            future: snapshot.data!.toByteData(format: ui.ImageByteFormat.png),
-                            builder: (context, snapshot) {
-                              if (snapshot.hasData) {
-                                return fm.Image.memory(ff.Uint8List.view(snapshot.data!.buffer));
-                              }
-
-                              return const fm.Text('showing image', style: fm.TextStyle(fontSize: 16, color: fm.Color(0xffffffff)));
-                            },
-                          );
-                        }
-
-                        return const fm.Text('reading image and rotate if landscape', style: fm.TextStyle(fontSize: 16, color: fm.Color(0xffffffff)));
-                      },
-                    );
+                  if (snapshot.hasData && snapshot.data!.contains('image@read-rotate:done.')) {
+                    return fm.Image.file(io.File(
+                      String.fromCharCodes(cvrt.base64Decode(snapshot.data!.split('.')[1]))));
                   }
 
                   return const fm.Text('opening image', style: fm.TextStyle(fontSize: 16, color: fm.Color(0xffffffff)));
@@ -152,4 +157,33 @@ class _PreviewScreenState extends fm.State<PreviewScreen> {
       ),
     );
   }
+}
+
+@pragma('vm:entry-point')
+void readAndRotateImage(isl.SendPort sendPort) {
+  final isl.ReceivePort workerThreadReceiver = isl.ReceivePort();
+
+  sendPort.send(workerThreadReceiver.sendPort);
+
+  workerThreadReceiver.listen((message) async {
+    if (message is String && message.contains('image@read-rotate.')) {
+      final String imgPath = String.fromCharCodes(cvrt.base64Decode(message.split('.')[1]));
+
+      final img.Image? image = await img.decodeImageFile(imgPath);
+
+      final io.Directory tempDir = await pd.getTemporaryDirectory();
+
+      if (image != null) {
+        if (image.width > image.height) {
+          await img.encodeJpgFile('${tempDir.path}/working', img.copyRotate(image, angle: -90));
+        } else {
+          await img.encodeJpgFile('${tempDir.path}/working', image);
+        }
+
+        final String data = cvrt.base64Encode(cvrt.utf8.encode('${tempDir.path}/working'));
+
+        sendPort.send('image@read-rotate:done.$data');
+      }
+    }
+  }); 
 }
