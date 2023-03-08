@@ -1,36 +1,21 @@
 
 import 'package:flutter/material.dart' as fm;
+import 'package:flutter_bloc/flutter_bloc.dart' as fb;
+
+import 'screens/home.dart';
+import 'blocs/image_picking.dart';
+
 
 class App extends fm.StatelessWidget {
   const App({ super.key });
 
-  _openPhotoLibrary() {
-  }
-
   @override
   fm.Widget build(fm.BuildContext context) {
-    return fm.MaterialApp(
-      title: 'FreeWatermark',
-      home: fm.Scaffold(
-        body: fm.Center(
-          child: fm.Column(
-            mainAxisAlignment: fm.MainAxisAlignment.center,
-            crossAxisAlignment: fm.CrossAxisAlignment.center,
-            children: [
-              fm.GestureDetector( 
-                onTap: _openPhotoLibrary,
-                child: const fm.Icon(
-                  fm.Icons.image,
-                  size: 64,
-                ),
-              ),
-
-              const fm.SizedBox(height: 8),
-
-              const fm.Text('Choose an image for watermarking'),
-            ],
-          ),
-        ),
+    return fb.BlocProvider(
+      create: (_) => ImagePickingBloc(),
+      child: const fm.MaterialApp(
+        title: 'FreeWatermark',
+        home: HomeScreen(),
       ),
     );
   }
