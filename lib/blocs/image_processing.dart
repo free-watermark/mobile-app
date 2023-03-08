@@ -25,6 +25,15 @@ class ImageGrayscaling extends ImageProcessingState {}
 
 class ImageGrayscaled extends ImageProcessingState {}
 
+class EditModeChanged extends ImageProcessingState {
+  final EditMode mode;
+
+  EditModeChanged(this.mode);
+
+  @override
+  List<Object> get props => [mode];
+}
+
 class ImageGrayscaleToggled extends ImageProcessingState {
   final bool isGrayscaled;
 
@@ -46,12 +55,27 @@ class LoadImageDone extends ImageProcessingEvent {}
 
 class ImageGrayscaleDone extends ImageProcessingEvent {}
 
+enum EditMode {
+  text,
+  zoom,
+  angle,
+  opacity,
+}
+
+class ChangeEditMode extends ImageProcessingEvent {
+  final EditMode mode;
+
+  ChangeEditMode(this.mode);
+}
+
 class ImageProcessingBloc extends fb.Bloc<ImageProcessingEvent, ImageProcessingState> {
   bool _isGrayscaled = false;
   bool _isGrayscaling = false;
   bool _isImageLoaded = false;
   bool _isLoadingImage = true;
+
   bool _grayscaleToggled = false;
+  EditMode _editMode = EditMode.text;
 
   final dynamic imageFile;
 
@@ -61,6 +85,10 @@ class ImageProcessingBloc extends fb.Bloc<ImageProcessingEvent, ImageProcessingS
   late final String _workingFileTempId;
   late final fi.FlutterIsolate _workerThread;
   late final isl.SendPort _workerThreadSendPort;
+
+  EditMode currentEditMode() {
+    return _editMode;
+  }
 
   bool isLoadingImage() {
     return _isLoadingImage;
@@ -92,6 +120,12 @@ class ImageProcessingBloc extends fb.Bloc<ImageProcessingEvent, ImageProcessingS
   }
 
   ImageProcessingBloc(this.imageFile): super(ImageLoading()) {
+    on<ChangeEditMode>((event, emit) {
+      _editMode = event.mode;
+
+      emit(EditModeChanged(event.mode));
+    });
+
     on<LoadImageDone>((_, emit) {
       _isImageLoaded = true;
       _isLoadingImage = false;
