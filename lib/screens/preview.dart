@@ -132,9 +132,21 @@ class _PreviewScreenState extends fm.State<PreviewScreen> {
                     padding: fm.EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     child: fm.Icon(fm.Icons.zoom_in_map_rounded, size: 32, color: fm.Color(0xffffffff)),
                   ), () {}),
-                  _featureButton(const fm.Padding(
-                    padding: fm.EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    child: fm.Icon(fm.Icons.brightness_medium_outlined, size: 32, color: fm.Color(0xffffffff)),
+                  _featureButton(fm.Padding(
+                    padding: const fm.EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    child: fb.BlocSelector<ImageProcessingBloc, ImageProcessingState, bool>(
+                      bloc: _imageProcessBloc,
+                      selector: (_) => _imageProcessBloc.isToggleGrayscaled(),
+                      builder: (context, state) {
+                        return fm.Icon(
+                          fm.Icons.brightness_medium_outlined,
+                          size: 32,
+                          color: _imageProcessBloc.isToggleGrayscaled()
+                            ? const fm.Color(0xfff56300)
+                            : const fm.Color(0xffffffff),
+                        );
+                      }
+                    ),
                   ), () {
                     final imageProcess = context.read<ImageProcessingBloc>();
 
