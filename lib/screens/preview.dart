@@ -22,14 +22,16 @@ class PreviewScreen extends fm.StatelessWidget {
   fm.Widget build(fm.BuildContext context) {
     return fm.Scaffold(
       appBar: fm.AppBar(backgroundColor: const fm.Color(0xff000000)),
+      backgroundColor: const fm.Color(0xff000000),
       body: fm.Column(
         children: [
           fm.Container(
             padding: const fm.EdgeInsets.all(8.0),
+            height: fm.MediaQuery.of(context).size.height * 0.64,
             decoration: const fm.BoxDecoration(
               color: fm.Color(0xff000000),
             ),
-            child: fm.Image.file(_getImageFile()),
+            child: fm.Center(child: fm.Image.file(_getImageFile())),
           ),
         ],
       ),
