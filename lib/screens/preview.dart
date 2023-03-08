@@ -30,9 +30,17 @@ class _PreviewScreenState extends fm.State<PreviewScreen> {
   late final fi.FlutterIsolate _workerThread;
   late final isl.SendPort _workerThreadSendPort;
 
+  bool _isGrayscaling = false;
+
   fm.Widget _featureButton(fm.Widget icon, Function() func) {
     return fm.GestureDetector(
-      onTap: func,
+      onTap: () {
+        if (_isGrayscaling) {
+          return;
+        }
+
+        func();
+      },
       child: icon,
     );
   }
@@ -62,6 +70,10 @@ class _PreviewScreenState extends fm.State<PreviewScreen> {
         }
 
         if (msg is String) {
+          if (msg == 'image@grayscale:done') {
+            _isGrayscaling = false;
+          }
+
           _workerResponse.sink.add(msg);
         }
       }); 
@@ -111,8 +123,8 @@ class _PreviewScreenState extends fm.State<PreviewScreen> {
               child: fm.StreamBuilder<String>(
                 stream: _workerResponse.stream,
                 builder: (context, snapshot) {
-                  if (snapshot.hasData) {
-                    switch (snapshot.data!) {
+                  if (snapshot.hasData && snapshot.data != null) {
+                    switch (snapshot.data) {
                       case 'image@read-rotate:done': {
                         return fm.Image.file(io.File('${_workingDir.path}/$_workingFileTempId'));
                       }
@@ -163,6 +175,7 @@ class _PreviewScreenState extends fm.State<PreviewScreen> {
                     padding: fm.EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     child: fm.Icon(fm.Icons.brightness_medium_outlined, size: 32, color: fm.Color(0xffffffff)),
                   ), () {
+                    _isGrayscaling = true;
                     _workerThreadSendPort.send('image@grayscale');
                   }),
                 ],
@@ -192,6 +205,10 @@ Future<void> readAndRotateImage(isl.SendPort sendPort) async {
     if (message is String && message.contains('image@read-rotate.')) {
       final String imgPath = String.fromCharCodes(cvrt.base64Decode(message.split('.')[1]));
 
+      if (await io.File('${tempDir.path}/$tempId').exists()) {
+        return;
+      }
+
       image = await img.decodeImageFile(imgPath);
 
       if (image != null) {
@@ -208,6 +225,12 @@ Future<void> readAndRotateImage(isl.SendPort sendPort) async {
     }
 
     if (message is String && message == 'image@grayscale') {
+      if (await io.File('${tempDir.path}/$tempId-grayscale').exists()) {
+        sendPort.send('image@grayscale:done');
+
+        return;
+      }
+
       if (image != null) {
         await img.encodeJpgFile('${tempDir.path}/$tempId-grayscale', img.grayscale(image!));
 
