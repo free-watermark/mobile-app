@@ -66,7 +66,7 @@ class _PreviewScreenState extends fm.State<PreviewScreen> {
         ],
       ),
       backgroundColor: const fm.Color(0xff000000),
-      body: fm.Column(
+      body: fm.ListView(
         children: [
           fm.Container(
             padding: const fm.EdgeInsets.all(8.0),
