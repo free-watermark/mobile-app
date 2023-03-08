@@ -1,41 +1,25 @@
 
 import 'dart:io' as io;
-import 'dart:isolate' as isl;
-import 'dart:convert' as cvrt;
-import 'dart:async' as asyncx;
 
-import 'package:image/image.dart' as img;
-import 'package:nanoid/nanoid.dart' as nid;
 import 'package:flutter/material.dart' as fm;
-import 'package:file_picker/file_picker.dart' as fp;
-import 'package:image_picker/image_picker.dart' as imgp;
-import 'package:path_provider/path_provider.dart' as pd;
-import 'package:flutter_isolate/flutter_isolate.dart' as fi;
+import 'package:flutter_bloc/flutter_bloc.dart' as fb;
+
+import '../blocs/image_processing.dart';
 
 class PreviewScreen extends fm.StatefulWidget {
-  final dynamic imageFile;
-
-  const PreviewScreen({ required this.imageFile, super.key });
+  const PreviewScreen({ super.key });
 
   @override
   fm.State<PreviewScreen> createState() => _PreviewScreenState();
 }
 
 class _PreviewScreenState extends fm.State<PreviewScreen> {
-  final isl.ReceivePort _mainThreadReceiver = isl.ReceivePort();
-  final asyncx.StreamController<String> _workerResponse = asyncx.StreamController<String>();
-
-  late final io.Directory _workingDir;
-  late final String _workingFileTempId;
-  late final fi.FlutterIsolate _workerThread;
-  late final isl.SendPort _workerThreadSendPort;
-
-  bool _isGrayscaling = false;
+  late final ImageProcessingBloc _imageProcessBloc;
 
   fm.Widget _featureButton(fm.Widget icon, Function() func) {
     return fm.GestureDetector(
       onTap: () {
-        if (_isGrayscaling) {
+        if (_imageProcessBloc.isGrayscaling() || _imageProcessBloc.isLoadingImage()) {
           return;
         }
 
@@ -49,43 +33,14 @@ class _PreviewScreenState extends fm.State<PreviewScreen> {
   void initState() {
     super.initState();
 
-    fi.FlutterIsolate.spawn(readAndRotateImage, _mainThreadReceiver.sendPort).then((t) async {
-      _workerThread = t;
+    _imageProcessBloc = context.read<ImageProcessingBloc>();
 
-      _workingDir = await pd.getTemporaryDirectory();
-
-      _mainThreadReceiver.listen((msg) {
-        if (msg is isl.SendPort) {
-          _workerThreadSendPort = msg;
-
-          final String imgPath = cvrt.base64Encode(cvrt.utf8.encode(widget.imageFile is imgp.XFile
-            ? (widget.imageFile as imgp.XFile).path
-            : (widget.imageFile as fp.FilePickerResult).paths[0]!));
-
-          _workerThreadSendPort.send('image@read-rotate.$imgPath');
-        }
-
-        if (msg is String && msg.contains('working-file-temp-id@set.')) {
-          _workingFileTempId = msg.split('.')[1];
-        }
-
-        if (msg is String) {
-          if (msg == 'image@grayscale:done') {
-            _isGrayscaling = false;
-          }
-
-          _workerResponse.sink.add(msg);
-        }
-      }); 
-    });
+    _imageProcessBloc.add(LoadImage());
   }
 
   @override
   void dispose() {
-    _workerThread.kill();
-
-    _mainThreadReceiver.close();
-    _workerResponse.close();
+    _imageProcessBloc.dispose();
 
     super.dispose();
   }
@@ -120,21 +75,27 @@ class _PreviewScreenState extends fm.State<PreviewScreen> {
               color: fm.Color(0xff000000),
             ),
             child: fm.Center(
-              child: fm.StreamBuilder<String>(
-                stream: _workerResponse.stream,
-                builder: (context, snapshot) {
-                  if (snapshot.hasData && snapshot.data != null) {
-                    switch (snapshot.data) {
-                      case 'image@read-rotate:done': {
-                        return fm.Image.file(io.File('${_workingDir.path}/$_workingFileTempId'));
-                      }
+              child: fb.BlocBuilder<ImageProcessingBloc, ImageProcessingState>(
+                bloc: _imageProcessBloc,
+                builder: (context, state) {
+                  final imageProcess = context.read<ImageProcessingBloc>();
 
-                      case 'image@grayscale:done': {
-                        return fm.Image.file(io.File('${_workingDir.path}/$_workingFileTempId-grayscale'));
-                      }
-                    }
+                  if (state is ImageLoaded) {
+                    return fm.Image.file(io.File(imageProcess.getOriginalImagePath()));
                   }
 
+                  if (state is ImageGrayscaling) {
+                    return const fm.Text('grayscaling image', style: fm.TextStyle(fontSize: 16, color: fm.Color(0xffffffff)));
+                  }
+
+                  if (state is ImageGrayscaleToggled) {
+                    if (state.isGrayscaled) {
+                      return fm.Image.file(io.File(imageProcess.getGrayscaledImagePath()));
+                    }
+
+                    return fm.Image.file(io.File(imageProcess.getOriginalImagePath()));
+                  }
+                  
                   return const fm.Text('opening image', style: fm.TextStyle(fontSize: 16, color: fm.Color(0xffffffff)));
                 },
               ),
@@ -175,8 +136,14 @@ class _PreviewScreenState extends fm.State<PreviewScreen> {
                     padding: fm.EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     child: fm.Icon(fm.Icons.brightness_medium_outlined, size: 32, color: fm.Color(0xffffffff)),
                   ), () {
-                    _isGrayscaling = true;
-                    _workerThreadSendPort.send('image@grayscale');
+                    final imageProcess = context.read<ImageProcessingBloc>();
+
+                    if (imageProcess.isGrayscaled()) {
+                      imageProcess.add(ImageGrayscaleToggle());
+                      return;
+                    }
+
+                    imageProcess.add(ImageGrayscale());
                   }),
                 ],
               ),
@@ -186,56 +153,4 @@ class _PreviewScreenState extends fm.State<PreviewScreen> {
       ),
     );
   }
-}
-
-@pragma('vm:entry-point')
-Future<void> readAndRotateImage(isl.SendPort sendPort) async {
-  final isl.ReceivePort workerThreadReceiver = isl.ReceivePort();
-
-  sendPort.send(workerThreadReceiver.sendPort);
-
-  img.Image? image;
-
-  final String tempId = nid.nanoid(16);
-  final io.Directory tempDir = await pd.getTemporaryDirectory();
-
-  sendPort.send('working-file-temp-id@set.$tempId');
-
-  workerThreadReceiver.listen((message) async {
-    if (message is String && message.contains('image@read-rotate.')) {
-      final String imgPath = String.fromCharCodes(cvrt.base64Decode(message.split('.')[1]));
-
-      if (await io.File('${tempDir.path}/$tempId').exists()) {
-        return;
-      }
-
-      image = await img.decodeImageFile(imgPath);
-
-      if (image != null) {
-        if (image!.width > image!.height) {
-          image = img.copyRotate(image!, angle: -90);
-
-          await img.encodeJpgFile('${tempDir.path}/$tempId', image!);
-        } else {
-          await img.encodeJpgFile('${tempDir.path}/$tempId', image!);
-        }
-
-        sendPort.send('image@read-rotate:done');
-      }
-    }
-
-    if (message is String && message == 'image@grayscale') {
-      if (await io.File('${tempDir.path}/$tempId-grayscale').exists()) {
-        sendPort.send('image@grayscale:done');
-
-        return;
-      }
-
-      if (image != null) {
-        await img.encodeJpgFile('${tempDir.path}/$tempId-grayscale', img.grayscale(image!));
-
-        sendPort.send('image@grayscale:done');
-      }
-    }
-  });
 }

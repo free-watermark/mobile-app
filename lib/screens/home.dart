@@ -1,9 +1,11 @@
 
 import 'package:flutter/material.dart' as fm;
 import 'package:file_picker/file_picker.dart' as fp;
+import 'package:flutter_bloc/flutter_bloc.dart' as fb;
 import 'package:image_picker/image_picker.dart' as imgp;
 
 import 'preview.dart';
+import '../blocs/image_processing.dart';
 
 class HomeScreen extends fm.StatefulWidget {
   const HomeScreen({super.key});
@@ -35,7 +37,10 @@ class _HomeScreenState extends fm.State<HomeScreen> {
     }
 
     await navigator.push(fm.MaterialPageRoute(builder: (context) {
-      return PreviewScreen(imageFile: img);
+      return fb.BlocProvider(
+        create: (_) => ImageProcessingBloc(img),
+        child: const PreviewScreen(),
+      );
     }));
   }
 
