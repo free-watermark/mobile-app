@@ -18,10 +18,33 @@ class PreviewScreen extends fm.StatelessWidget {
     return io.File((imageFile as fp.FilePickerResult).paths[0]!);
   }
 
+  fm.Widget _featureButton(fm.Widget icon) {
+    return fm.GestureDetector(
+      onTap: () {},
+      child: icon,
+    );
+  }
+
   @override
   fm.Widget build(fm.BuildContext context) {
     return fm.Scaffold(
-      appBar: fm.AppBar(backgroundColor: const fm.Color(0xff000000)),
+      appBar: fm.AppBar(
+        backgroundColor: const fm.Color(0xff000000),
+        actions: [
+          fm.TextButton(
+            onPressed: () {},
+            child: fm.Row(
+              children: const [
+                fm.Text('Save', style: fm.TextStyle(fontSize: 16, color: fm.Color(0xffffffff))),
+
+                fm.SizedBox(width: 4),
+
+                fm.Icon(fm.Icons.done, size: 26, color: fm.Color(0xffffffff)),
+              ],
+            ),
+          ),
+        ],
+      ),
       backgroundColor: const fm.Color(0xff000000),
       body: fm.Column(
         children: [
@@ -33,6 +56,45 @@ class PreviewScreen extends fm.StatelessWidget {
             ),
             child: fm.Center(child: fm.Image.file(_getImageFile())),
           ),
+
+          const fm.SizedBox(height: 16),
+
+          const fm.Divider(height: 8, color: fm.Color(0xffffffff)),
+
+          const fm.SizedBox(height: 16),
+
+          fm.SizedBox(
+            height: 64,
+            width: double.infinity,
+            child: fm.Center(child:
+              fm.ListView(
+                shrinkWrap: true,
+                scrollDirection: fm.Axis.horizontal,
+                children: [
+                  _featureButton(const fm.Padding(
+                    padding: fm.EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    child: fm.Icon(fm.Icons.font_download, size: 32, color: fm.Color(0xffffffff)),
+                  )),
+                  _featureButton(const fm.Padding(
+                    padding: fm.EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    child: fm.Icon(fm.Icons.opacity, size: 32, color: fm.Color(0xffffffff)),
+                  )),
+                  _featureButton(const fm.Padding(
+                    padding: fm.EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    child: fm.Icon(fm.Icons.rotate_left, size: 32, color: fm.Color(0xffffffff)),
+                  )),
+                  _featureButton(const fm.Padding(
+                    padding: fm.EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    child: fm.Icon(fm.Icons.zoom_in_map_rounded, size: 32, color: fm.Color(0xffffffff)),
+                  )),
+                  _featureButton(const fm.Padding(
+                    padding: fm.EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    child: fm.Icon(fm.Icons.brightness_medium_outlined, size: 32, color: fm.Color(0xffffffff)),
+                  )),
+                ],
+              ),
+            ),
+          ), 
         ],
       ),
     );
