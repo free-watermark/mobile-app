@@ -1,21 +1,45 @@
 
-import 'dart:io' as io;
+import 'dart:ui' as ui;
+import 'dart:typed_data' as td;
 
+import 'package:image/image.dart' as img;
 import 'package:flutter/material.dart' as fm;
+import 'package:flutter/foundation.dart' as ff;
 import 'package:file_picker/file_picker.dart' as fp;
 import 'package:image_picker/image_picker.dart' as imgp;
 
-class PreviewScreen extends fm.StatelessWidget {
+import '../utils/image.dart';
+
+class PreviewScreen extends fm.StatefulWidget {
   final dynamic imageFile;
 
   const PreviewScreen({ required this.imageFile, super.key });
 
-  io.File _getImageFile() {
-    if (imageFile is imgp.XFile) {
-      return io.File((imageFile as imgp.XFile).path);
+  @override
+  fm.State<PreviewScreen> createState() => _PreviewScreenState();
+}
+
+class _PreviewScreenState extends fm.State<PreviewScreen> {
+  late img.Image _image;
+
+  Future<img.Image?> _getImageFile() async {
+    img.Image? image = await img.decodeImageFile(
+      widget.imageFile is imgp.XFile
+        ? (widget.imageFile as imgp.XFile).path
+        : (widget.imageFile as fp.FilePickerResult).paths[0]!
+    );
+
+    if (image == null) {
+      return null;
     }
 
-    return io.File((imageFile as fp.FilePickerResult).paths[0]!);
+    if (image.width > image.height) {
+      _image = img.copyRotate(image, angle: -90);
+    } else {
+      _image = image;
+    }
+
+    return _image;
   }
 
   fm.Widget _featureButton(fm.Widget icon) {
@@ -54,7 +78,36 @@ class PreviewScreen extends fm.StatelessWidget {
             decoration: const fm.BoxDecoration(
               color: fm.Color(0xff000000),
             ),
-            child: fm.Center(child: fm.Image.file(_getImageFile())),
+            child: fm.Center(
+              child: fm.FutureBuilder<img.Image?>(
+                future: _getImageFile(),
+                builder: (context, snapshot) {
+                  if (snapshot.hasData && snapshot.data != null) {
+                    return fm.FutureBuilder<ui.Image>(
+                      future: convertImageToFlutterUi(snapshot.data!),
+                      builder: (context, snapshot) {
+                        if (snapshot.hasData) {
+                          return fm.FutureBuilder<td.ByteData?>(
+                            future: snapshot.data!.toByteData(format: ui.ImageByteFormat.png),
+                            builder: (context, snapshot) {
+                              if (snapshot.hasData) {
+                                return fm.Image.memory(ff.Uint8List.view(snapshot.data!.buffer));
+                              }
+
+                              return const fm.Text('showing image', style: fm.TextStyle(fontSize: 16, color: fm.Color(0xffffffff)));
+                            },
+                          );
+                        }
+
+                        return const fm.Text('reading image and rotate if landscape', style: fm.TextStyle(fontSize: 16, color: fm.Color(0xffffffff)));
+                      },
+                    );
+                  }
+
+                  return const fm.Text('opening image', style: fm.TextStyle(fontSize: 16, color: fm.Color(0xffffffff)));
+                },
+              ),
+            ),
           ),
 
           const fm.SizedBox(height: 16),
