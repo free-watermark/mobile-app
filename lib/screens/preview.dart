@@ -77,6 +77,7 @@ class _PreviewScreenState extends fm.State<PreviewScreen> {
             child: fm.Center(
               child: fb.BlocBuilder<ImageProcessingBloc, ImageProcessingState>(
                 bloc: _imageProcessBloc,
+                buildWhen: (_, curr) => curr is ImageLoaded || curr is ImageGrayscaling || curr is ImageGrayscaleToggled,
                 builder: (context, state) {
                   final imageProcess = context.read<ImageProcessingBloc>();
 
@@ -89,7 +90,7 @@ class _PreviewScreenState extends fm.State<PreviewScreen> {
                   }
 
                   if (state is ImageGrayscaleToggled) {
-                    if (state.isGrayscaled) {
+                    if (_imageProcessBloc.isToggleGrayscaled()) {
                       return fm.Image.file(io.File(imageProcess.getGrayscaledImagePath()));
                     }
 
@@ -116,22 +117,68 @@ class _PreviewScreenState extends fm.State<PreviewScreen> {
                 shrinkWrap: true,
                 scrollDirection: fm.Axis.horizontal,
                 children: [
-                  _featureButton(const fm.Padding(
-                    padding: fm.EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    child: fm.Icon(fm.Icons.font_download, size: 32, color: fm.Color(0xffffffff)),
-                  ), () {}),
-                  _featureButton(const fm.Padding(
-                    padding: fm.EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    child: fm.Icon(fm.Icons.opacity, size: 32, color: fm.Color(0xffffffff)),
-                  ), () {}),
-                  _featureButton(const fm.Padding(
-                    padding: fm.EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    child: fm.Icon(fm.Icons.rotate_left, size: 32, color: fm.Color(0xffffffff)),
-                  ), () {}),
-                  _featureButton(const fm.Padding(
-                    padding: fm.EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    child: fm.Icon(fm.Icons.zoom_in_map_rounded, size: 32, color: fm.Color(0xffffffff)),
-                  ), () {}),
+                  fb.BlocBuilder<ImageProcessingBloc, ImageProcessingState>(
+                    bloc: _imageProcessBloc,
+                    buildWhen: (_, curr) => curr is EditModeChanged,
+                    builder: (context, _) {
+                      return fm.Row(
+                        children: [
+                          _featureButton(fm.Padding(
+                            padding: const fm.EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            child: fm.Icon(
+                              fm.Icons.font_download,
+                              size: 32,
+                              color: _imageProcessBloc.currentEditMode() == EditMode.text
+                                ? const fm.Color(0xfff56300)
+                                : const fm.Color(0xffffffff),
+                            ),
+                          ), () {
+                            _imageProcessBloc.add(ChangeEditMode(EditMode.text));
+                          }),
+
+                          _featureButton(fm.Padding(
+                            padding: const fm.EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            child: fm.Icon(
+                              fm.Icons.opacity,
+                              size: 32,
+                              color: _imageProcessBloc.currentEditMode() == EditMode.opacity
+                                ? const fm.Color(0xfff56300)
+                                : const fm.Color(0xffffffff),
+                            ),
+                          ), () {
+                            _imageProcessBloc.add(ChangeEditMode(EditMode.opacity));
+                          }),
+
+                          _featureButton(fm.Padding(
+                            padding: const fm.EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            child: fm.Icon(
+                              fm.Icons.rotate_left,
+                              size: 32,
+                              color: _imageProcessBloc.currentEditMode() == EditMode.angle
+                                ? const fm.Color(0xfff56300)
+                                : const fm.Color(0xffffffff),
+                            ),
+                          ), () {
+                            _imageProcessBloc.add(ChangeEditMode(EditMode.angle));
+                          }),
+
+                          _featureButton(fm.Padding(
+                            padding: const fm.EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            child: fm.Icon(
+                              fm.Icons.zoom_in_map_rounded,
+                              size: 32,
+                              color: _imageProcessBloc.currentEditMode() == EditMode.zoom
+                                ? const fm.Color(0xfff56300)
+                                : const fm.Color(0xffffffff),
+                            ),
+                          ), () {
+                            _imageProcessBloc.add(ChangeEditMode(EditMode.zoom));
+                          }),
+                        ],
+                      );
+                    },
+                  ),
+
                   _featureButton(fm.Padding(
                     padding: const fm.EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     child: fb.BlocSelector<ImageProcessingBloc, ImageProcessingState, bool>(
