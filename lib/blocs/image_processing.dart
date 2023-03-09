@@ -25,6 +25,42 @@ class ImageGrayscaling extends ImageProcessingState {}
 
 class ImageGrayscaled extends ImageProcessingState {}
 
+class WatermarkingTextChanged extends ImageProcessingState {
+  final String text;
+
+  WatermarkingTextChanged(this.text);
+
+  @override
+  List<Object> get props => [text];
+}
+
+class AngleChanged extends ImageProcessingState {
+  final double angle;
+
+  AngleChanged(this.angle);
+
+  @override
+  List<Object> get props => [angle];
+}
+
+class ZoomChanged extends ImageProcessingState {
+  final double zoom;
+
+  ZoomChanged(this.zoom);
+
+  @override
+  List<Object> get props => [zoom];
+}
+
+class OpacityChanged extends ImageProcessingState {
+  final double opacity;
+
+  OpacityChanged(this.opacity);
+
+  @override
+  List<Object> get props => [opacity];
+}
+
 class EditModeChanged extends ImageProcessingState {
   final EditMode mode;
 
@@ -43,7 +79,10 @@ class ImageGrayscaleToggled extends ImageProcessingState {
   List<Object> get props => [isGrayscaled];
 }
 
-abstract class ImageProcessingEvent {}
+abstract class ImageProcessingEvent extends eq.Equatable {
+  @override
+  List<Object> get props => [];
+}
 
 class LoadImage extends ImageProcessingEvent {}
 
@@ -54,6 +93,42 @@ class ImageGrayscaleToggle extends ImageProcessingEvent {}
 class LoadImageDone extends ImageProcessingEvent {}
 
 class ImageGrayscaleDone extends ImageProcessingEvent {}
+
+class AngleChange extends ImageProcessingEvent {
+  final double angle;
+
+  AngleChange(this.angle);
+
+  @override
+  List<Object> get props => [angle];
+}
+
+class ZoomChange extends ImageProcessingEvent {
+  final double zoom;
+
+  ZoomChange(this.zoom);
+
+  @override
+  List<Object> get props => [zoom];
+}
+
+class OpacityChange extends ImageProcessingEvent {
+  final double opacity;
+
+  OpacityChange(this.opacity);
+
+  @override
+  List<Object> get props => [opacity];
+}
+
+class WatermarkingTextChange extends ImageProcessingEvent {
+  final String text;
+
+  WatermarkingTextChange(this.text);
+
+  @override
+  List<Object> get props => [text];
+}
 
 enum EditMode {
   text,
@@ -74,8 +149,12 @@ class ImageProcessingBloc extends fb.Bloc<ImageProcessingEvent, ImageProcessingS
   bool _isImageLoaded = false;
   bool _isLoadingImage = true;
 
+  double _zoom = 0;
+  double _angle = 0;
+  double _opacity = 1.0;
+  String _watermarkingText = '';
   bool _grayscaleToggled = false;
-  EditMode _editMode = EditMode.text;
+  EditMode _editMode = EditMode.text; 
 
   final dynamic imageFile;
 
@@ -85,6 +164,22 @@ class ImageProcessingBloc extends fb.Bloc<ImageProcessingEvent, ImageProcessingS
   late final String _workingFileTempId;
   late final fi.FlutterIsolate _workerThread;
   late final isl.SendPort _workerThreadSendPort;
+
+  double zoomValue() {
+    return _zoom;
+  }
+
+  double angleValue() {
+    return _angle;
+  }
+
+  double opacityValue() {
+    return _opacity;
+  }
+
+  String watermarkingTextValue() {
+    return _watermarkingText;
+  }
 
   EditMode currentEditMode() {
     return _editMode;
@@ -120,6 +215,30 @@ class ImageProcessingBloc extends fb.Bloc<ImageProcessingEvent, ImageProcessingS
   }
 
   ImageProcessingBloc(this.imageFile): super(ImageLoading()) {
+    on<AngleChange>((event, emit) {
+      _angle = event.angle;
+
+      emit(AngleChanged(event.angle));
+    });
+
+    on<OpacityChange>((event, emit) {
+      _opacity = event.opacity;
+
+      emit(OpacityChanged(event.opacity));
+    });
+
+    on<ZoomChange>((event, emit) {
+      _zoom = event.zoom;
+
+      emit(ZoomChanged(event.zoom));
+    });
+
+    on<WatermarkingTextChange>((event, emit) {
+      _watermarkingText = event.text;
+
+      emit(WatermarkingTextChanged(event.text));
+    });
+
     on<ChangeEditMode>((event, emit) {
       _editMode = event.mode;
 
