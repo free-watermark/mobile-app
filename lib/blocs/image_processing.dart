@@ -151,7 +151,7 @@ class ImageProcessingBloc extends fb.Bloc<ImageProcessingEvent, ImageProcessingS
 
   double _zoom = 0;
   double _angle = 0;
-  double _opacity = 1.0;
+  double _opacity = 64;
   String _watermarkingText = '';
   bool _grayscaleToggled = false;
   EditMode _editMode = EditMode.text; 
