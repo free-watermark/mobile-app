@@ -1,5 +1,6 @@
 
 import 'dart:io' as io;
+import 'dart:async' as asyncx;
 
 import 'package:flutter/material.dart' as fm;
 import 'package:flutter_bloc/flutter_bloc.dart' as fb;
@@ -14,7 +15,12 @@ class PreviewScreen extends fm.StatefulWidget {
 }
 
 class _PreviewScreenState extends fm.State<PreviewScreen> {
+  final fm.TextEditingController _watermarkingTextInputController =
+    fm.TextEditingController(text: 'my-watermark@date@reason');
+
   late final ImageProcessingBloc _imageProcessBloc;
+
+  asyncx.Timer? _watermarkingTextInputDebounce;
 
   fm.Widget _featureButton(fm.Widget icon, Function() func) {
     return fm.GestureDetector(
@@ -40,6 +46,8 @@ class _PreviewScreenState extends fm.State<PreviewScreen> {
 
   @override
   void dispose() {
+    _watermarkingTextInputDebounce?.cancel();
+
     _imageProcessBloc.dispose();
 
     super.dispose();
@@ -106,6 +114,101 @@ class _PreviewScreenState extends fm.State<PreviewScreen> {
           const fm.SizedBox(height: 16),
 
           const fm.Divider(height: 8, color: fm.Color(0xffffffff)),
+
+          const fm.SizedBox(height: 16),
+
+          fb.BlocBuilder<ImageProcessingBloc, ImageProcessingState>(
+            bloc: _imageProcessBloc,
+            buildWhen: (_, curr) => curr is EditModeChanged,
+            builder: (context, state) {
+              final EditMode currentEditMode = _imageProcessBloc.currentEditMode();
+
+              switch (currentEditMode) {
+                case EditMode.text:
+                  return fm.Padding(
+                    padding: const fm.EdgeInsets.symmetric(horizontal: 16),
+                    child: fm.TextField(
+                      autofocus: true,
+                      autocorrect: false,
+                      controller: _watermarkingTextInputController,
+                      style: const fm.TextStyle(color: fm.Color(0xffffffff)),
+                      keyboardType: fm.TextInputType.text,
+                      decoration: const fm.InputDecoration(
+                        enabledBorder: fm.UnderlineInputBorder(
+                          borderSide: fm.BorderSide(
+                            color: fm.Color(0xfff56300),
+                          ),
+                        ),
+                        focusedBorder: fm.UnderlineInputBorder(
+                          borderSide: fm.BorderSide(
+                            color: fm.Color(0xfff56300),
+                          ),
+                        ),
+                      ),
+                      cursorColor: const fm.Color(0xfff56300),
+                      onChanged: (val) {
+                        if (_watermarkingTextInputDebounce?.isActive ?? false) {
+                          _watermarkingTextInputDebounce!.cancel();
+                        }
+
+                        _watermarkingTextInputDebounce = asyncx.Timer(const Duration(milliseconds: 640), () {
+                          _imageProcessBloc.add(WatermarkingTextChange(val));
+                        });
+                      },
+                    ),
+                );
+                case EditMode.zoom:
+                case EditMode.angle:
+                case EditMode.opacity: {
+                  return fb.BlocBuilder<ImageProcessingBloc, ImageProcessingState>(
+                    buildWhen: (_, curr) => curr is AngleChanged || curr is OpacityChanged || curr is ZoomChanged,
+                    builder: (context, state) {
+                      double max = 100;
+                      double value = 0;
+
+                      Function(double)? updateVal;
+
+                      if (currentEditMode == EditMode.angle) {
+                        max = 360;
+                        value = _imageProcessBloc.angleValue();
+
+                        updateVal = (newVal) {
+                          _imageProcessBloc.add(AngleChange(newVal));
+                        };
+                      }
+
+                      if (currentEditMode == EditMode.zoom) {
+                        value = _imageProcessBloc.zoomValue();
+
+                        updateVal = (newVal) {
+                          _imageProcessBloc.add(ZoomChange(newVal));
+                        };
+                      }
+
+                      if (currentEditMode == EditMode.opacity) {
+                        value = _imageProcessBloc.opacityValue();
+
+                        updateVal = (newVal) {
+                          _imageProcessBloc.add(OpacityChange(newVal));
+                        };
+                      }
+
+                      return fm.Slider(
+                        min: 0,
+                        max: max,
+                        value: value,
+                        thumbColor: const fm.Color(0xfff56400),
+                        activeColor: const fm.Color(0xfff56400),
+                        inactiveColor: const fm.Color(0xffffffff),
+                        secondaryActiveColor: const fm.Color(0xffffffff),
+                        onChanged: updateVal,
+                      );
+                    },
+                  ); 
+                }
+              }
+            },
+          ),
 
           const fm.SizedBox(height: 16),
 
