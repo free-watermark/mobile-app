@@ -6,6 +6,7 @@ import 'package:flutter/material.dart' as fm;
 import 'package:flutter_bloc/flutter_bloc.dart' as fb;
 
 import '../blocs/image_processing.dart';
+import '../widgets/watermark_paint.dart';
 
 class PreviewScreen extends fm.StatefulWidget {
   const PreviewScreen({ super.key });
@@ -15,8 +16,7 @@ class PreviewScreen extends fm.StatefulWidget {
 }
 
 class _PreviewScreenState extends fm.State<PreviewScreen> {
-  final fm.TextEditingController _watermarkingTextInputController =
-    fm.TextEditingController(text: 'my-watermark@date@reason');
+  final fm.TextEditingController _watermarkingTextInputController = fm.TextEditingController();
 
   late final ImageProcessingBloc _imageProcessBloc;
 
@@ -82,31 +82,57 @@ class _PreviewScreenState extends fm.State<PreviewScreen> {
             decoration: const fm.BoxDecoration(
               color: fm.Color(0xff000000),
             ),
-            child: fm.Center(
-              child: fb.BlocBuilder<ImageProcessingBloc, ImageProcessingState>(
-                bloc: _imageProcessBloc,
-                buildWhen: (_, curr) => curr is ImageLoaded || curr is ImageGrayscaling || curr is ImageGrayscaleToggled,
-                builder: (context, state) {
-                  final imageProcess = context.read<ImageProcessingBloc>();
+            child: fm.LayoutBuilder(
+              builder: (context, constraint) => fm.Stack(
+                fit: fm.StackFit.expand,
+                children: [
+                  fm.SizedBox(
+                    width: constraint.widthConstraints().maxWidth,
+                    height: constraint.heightConstraints().maxHeight,
+                    child: fb.BlocBuilder<ImageProcessingBloc, ImageProcessingState>(
+                      bloc: _imageProcessBloc,
+                      buildWhen: (_, curr) => curr is ImageLoaded || curr is ImageGrayscaling || curr is ImageGrayscaleToggled,
+                      builder: (context, state) {
+                        if (state is ImageLoaded || state is ImageGrayscaleToggled) {
+                          return fm.Image.file(io.File(
+                            _imageProcessBloc.isToggleGrayscaled()
+                              ? _imageProcessBloc.getGrayscaledImagePath()
+                              : _imageProcessBloc.getOriginalImagePath()
+                          ));
+                        }
+                        
+                        return const fm.Center(
+                          child: fm.Text(
+                            'processing image',
+                            style: fm.TextStyle(fontSize: 16, color: fm.Color(0xffffffff))
+                          ),
+                        );
+                      },
+                    ),
+                  ), 
 
-                  if (state is ImageLoaded) {
-                    return fm.Image.file(io.File(imageProcess.getOriginalImagePath()));
-                  }
+                  fm.SizedBox(
+                    width: constraint.widthConstraints().maxWidth,
+                    height: constraint.heightConstraints().maxHeight,
+                    child: fb.BlocBuilder<ImageProcessingBloc, ImageProcessingState>(
+                      bloc: _imageProcessBloc,
+                      buildWhen: (_, curr) => curr is OpacityChanged || curr is ZoomChanged || curr is AngleChanged || curr is WatermarkingTextChanged,
+                      builder: (context, _) {
+                        if (_imageProcessBloc.watermarkingTextValue().isEmpty) {
+                          return const fm.Material();
+                        }
 
-                  if (state is ImageGrayscaling) {
-                    return const fm.Text('grayscaling image', style: fm.TextStyle(fontSize: 16, color: fm.Color(0xffffffff)));
-                  }
-
-                  if (state is ImageGrayscaleToggled) {
-                    if (_imageProcessBloc.isToggleGrayscaled()) {
-                      return fm.Image.file(io.File(imageProcess.getGrayscaledImagePath()));
-                    }
-
-                    return fm.Image.file(io.File(imageProcess.getOriginalImagePath()));
-                  }
-                  
-                  return const fm.Text('opening image', style: fm.TextStyle(fontSize: 16, color: fm.Color(0xffffffff)));
-                },
+                        return fm.Opacity(
+                          opacity: _imageProcessBloc.opacityValue() / 100,
+                          child: fm.Transform.rotate(
+                            angle: _imageProcessBloc.angleValue() * 3.14/180,
+                            child: fm.CustomPaint(painter: WatermarkPaint(text: _imageProcessBloc.watermarkingTextValue())),
+                          ),
+                        );
+                      },
+                    ),
+                  ), 
+                ],
               ),
             ),
           ),
@@ -134,6 +160,7 @@ class _PreviewScreenState extends fm.State<PreviewScreen> {
                       style: const fm.TextStyle(color: fm.Color(0xffffffff)),
                       keyboardType: fm.TextInputType.text,
                       decoration: const fm.InputDecoration(
+                        hintText: 'my-watermark@date@reason',
                         enabledBorder: fm.UnderlineInputBorder(
                           borderSide: fm.BorderSide(
                             color: fm.Color(0xfff56300),
