@@ -213,6 +213,18 @@ class ImageProcessingBloc extends fb.Bloc<ImageProcessingEvent, ImageProcessingS
   void dispose() {
     _workerThread.kill();
     _mainThreadReceiver.close();
+
+    final io.File originalImageFile = io.File(getOriginalImagePath());
+
+    if (originalImageFile.existsSync()) {
+      originalImageFile.deleteSync(); 
+    } 
+
+    final io.File grayscaledFile = io.File(getGrayscaledImagePath());
+
+    if (grayscaledFile.existsSync()) {
+      grayscaledFile.deleteSync();
+    }
   }
 
   ImageProcessingBloc(this.imageFile): super(ImageLoading()) {
