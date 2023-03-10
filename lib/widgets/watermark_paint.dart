@@ -33,7 +33,7 @@ class WatermarkPaint extends fm.CustomPainter {
 
     final middleOffsetSize = textSize.width / 2;
 
-    const int additionalSizeTextcount = 2;
+    const int additionalSizeTextcount = 4;
 
     final realWidth = textSize.width * additionalSizeTextcount + width + gapSize + middleOffsetSize;
     final realHeight = textSize.height * additionalSizeTextcount + height + gapSize + middleOffsetSize;
