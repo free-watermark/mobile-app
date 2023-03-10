@@ -131,6 +131,7 @@ class WatermarkingTextChange extends ImageProcessingEvent {
 }
 
 enum EditMode {
+  none,
   text,
   zoom,
   angle,
@@ -150,11 +151,11 @@ class ImageProcessingBloc extends fb.Bloc<ImageProcessingEvent, ImageProcessingS
   bool _isLoadingImage = true;
 
   double _zoom = 0;
-  double _angle = 0;
+  double _angle = 45;
   double _opacity = 64;
   String _watermarkingText = '';
   bool _grayscaleToggled = false;
-  EditMode _editMode = EditMode.text; 
+  EditMode _editMode = EditMode.none; 
 
   final dynamic imageFile;
 
