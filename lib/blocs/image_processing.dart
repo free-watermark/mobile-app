@@ -5,6 +5,7 @@ import 'dart:convert' as cvrt;
 
 import 'package:image/image.dart' as img;
 import 'package:nanoid/nanoid.dart' as nid;
+import 'package:flutter/widgets.dart' as fw;
 import 'package:equatable/equatable.dart' as eq;
 import 'package:file_picker/file_picker.dart' as fp;
 import 'package:flutter_bloc/flutter_bloc.dart' as fb;
@@ -84,6 +85,8 @@ abstract class ImageProcessingEvent extends eq.Equatable {
   List<Object> get props => [];
 }
 
+class SetRenderedImageSizeDone extends ImageProcessingState {}
+
 class LoadImage extends ImageProcessingEvent {}
 
 class ImageGrayscale extends ImageProcessingEvent {}
@@ -130,6 +133,15 @@ class WatermarkingTextChange extends ImageProcessingEvent {
   List<Object> get props => [text];
 }
 
+class SetRenderedImageSize extends ImageProcessingEvent {
+  final fw.Size size;
+
+  SetRenderedImageSize(this.size);
+
+  @override
+  List<Object> get props => [size];
+}
+
 enum EditMode {
   none,
   text,
@@ -149,6 +161,7 @@ class ImageProcessingBloc extends fb.Bloc<ImageProcessingEvent, ImageProcessingS
   bool _isGrayscaling = false;
   bool _isImageLoaded = false;
   bool _isLoadingImage = true;
+  fw.Size? _renderedImageSize;
 
   double _zoom = 0;
   double _angle = 45;
@@ -165,6 +178,10 @@ class ImageProcessingBloc extends fb.Bloc<ImageProcessingEvent, ImageProcessingS
   late final String _workingFileTempId;
   late final fi.FlutterIsolate _workerThread;
   late final isl.SendPort _workerThreadSendPort;
+
+  fw.Size? renderedImageSize() {
+    return _renderedImageSize;
+  }
 
   double zoomValue() {
     return _zoom;
@@ -228,6 +245,12 @@ class ImageProcessingBloc extends fb.Bloc<ImageProcessingEvent, ImageProcessingS
   }
 
   ImageProcessingBloc(this.imageFile): super(ImageLoading()) {
+    on<SetRenderedImageSize>((event, emit) {
+      _renderedImageSize = event.size;
+
+      emit(SetRenderedImageSizeDone());
+    });
+
     on<AngleChange>((event, emit) {
       _angle = event.angle;
 
