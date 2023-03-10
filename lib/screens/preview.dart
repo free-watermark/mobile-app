@@ -85,6 +85,7 @@ class _PreviewScreenState extends fm.State<PreviewScreen> {
             child: fm.LayoutBuilder(
               builder: (context, constraint) => fm.Stack(
                 fit: fm.StackFit.expand,
+                clipBehavior: fm.Clip.hardEdge,
                 children: [
                   fm.SizedBox(
                     width: constraint.widthConstraints().maxWidth,
@@ -111,7 +112,9 @@ class _PreviewScreenState extends fm.State<PreviewScreen> {
                     ),
                   ), 
 
-                  fm.SizedBox(
+                  fm.Container(
+                    clipBehavior: fm.Clip.hardEdge,
+                    decoration: const fm.BoxDecoration(),
                     width: constraint.widthConstraints().maxWidth,
                     height: constraint.heightConstraints().maxHeight,
                     child: fb.BlocBuilder<ImageProcessingBloc, ImageProcessingState>(
@@ -119,14 +122,21 @@ class _PreviewScreenState extends fm.State<PreviewScreen> {
                       buildWhen: (_, curr) => curr is OpacityChanged || curr is ZoomChanged || curr is AngleChanged || curr is WatermarkingTextChanged,
                       builder: (context, _) {
                         if (_imageProcessBloc.watermarkingTextValue().isEmpty) {
-                          return const fm.Material();
+                          return const fm.Material(color: fm.Colors.transparent);
                         }
 
                         return fm.Opacity(
                           opacity: _imageProcessBloc.opacityValue() / 100,
                           child: fm.Transform.rotate(
                             angle: _imageProcessBloc.angleValue() * 3.14/180,
-                            child: fm.CustomPaint(painter: WatermarkPaint(text: _imageProcessBloc.watermarkingTextValue())),
+                            child: fm.CustomPaint(
+                              painter: WatermarkPaint(
+                                zoom: _imageProcessBloc.zoomValue(),
+                                text: _imageProcessBloc.watermarkingTextValue(),
+                                width: constraint.widthConstraints().maxWidth,
+                                height: constraint.heightConstraints().maxHeight,
+                              ),
+                            ),
                           ),
                         );
                       },
@@ -232,6 +242,10 @@ class _PreviewScreenState extends fm.State<PreviewScreen> {
                       );
                     },
                   ); 
+                }
+
+                default: {
+                  return const fm.Material();
                 }
               }
             },
