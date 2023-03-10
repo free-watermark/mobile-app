@@ -2,6 +2,7 @@
 import 'dart:io' as io;
 import 'dart:async' as asyncx;
 
+import 'package:flutter/widgets.dart' as fw;
 import 'package:flutter/material.dart' as fm;
 import 'package:flutter_bloc/flutter_bloc.dart' as fb;
 
@@ -19,6 +20,8 @@ class _PreviewScreenState extends fm.State<PreviewScreen> {
   final fm.TextEditingController _watermarkingTextInputController = fm.TextEditingController();
 
   late final ImageProcessingBloc _imageProcessBloc;
+
+  final fw.GlobalKey _imageKey = fw.GlobalKey();
 
   asyncx.Timer? _watermarkingTextInputDebounce;
 
@@ -77,73 +80,80 @@ class _PreviewScreenState extends fm.State<PreviewScreen> {
       body: fm.ListView(
         children: [
           fm.Container(
+            alignment: fm.Alignment.center,
             padding: const fm.EdgeInsets.all(8.0),
             height: fm.MediaQuery.of(context).size.height * 0.64,
             decoration: const fm.BoxDecoration(
               color: fm.Color(0xff000000),
             ),
-            child: fm.LayoutBuilder(
-              builder: (context, constraint) => fm.Stack(
-                fit: fm.StackFit.expand,
-                clipBehavior: fm.Clip.hardEdge,
-                children: [
-                  fm.SizedBox(
-                    width: constraint.widthConstraints().maxWidth,
-                    height: constraint.heightConstraints().maxHeight,
-                    child: fb.BlocBuilder<ImageProcessingBloc, ImageProcessingState>(
-                      bloc: _imageProcessBloc,
-                      buildWhen: (_, curr) => curr is ImageLoaded || curr is ImageGrayscaling || curr is ImageGrayscaleToggled,
-                      builder: (context, state) {
-                        if (state is ImageLoaded || state is ImageGrayscaleToggled) {
-                          return fm.Image.file(io.File(
-                            _imageProcessBloc.isToggleGrayscaled()
-                              ? _imageProcessBloc.getGrayscaledImagePath()
-                              : _imageProcessBloc.getOriginalImagePath()
-                          ));
-                        }
-                        
-                        return const fm.Center(
-                          child: fm.Text(
-                            'processing image',
-                            style: fm.TextStyle(fontSize: 16, color: fm.Color(0xffffffff))
-                          ),
-                        );
-                      },
-                    ),
-                  ), 
 
-                  fm.Container(
+            child: fb.BlocBuilder<ImageProcessingBloc, ImageProcessingState>(
+              bloc: _imageProcessBloc,
+              buildWhen: (_, curr) => curr is ImageLoaded || curr is ImageGrayscaling || curr is ImageGrayscaleToggled,
+              builder: (context, state) {
+                if (state is ImageLoaded || state is ImageGrayscaleToggled) {
+                  return fm.Stack(
                     clipBehavior: fm.Clip.hardEdge,
-                    decoration: const fm.BoxDecoration(),
-                    width: constraint.widthConstraints().maxWidth,
-                    height: constraint.heightConstraints().maxHeight,
-                    child: fb.BlocBuilder<ImageProcessingBloc, ImageProcessingState>(
-                      bloc: _imageProcessBloc,
-                      buildWhen: (_, curr) => curr is OpacityChanged || curr is ZoomChanged || curr is AngleChanged || curr is WatermarkingTextChanged,
-                      builder: (context, _) {
-                        if (_imageProcessBloc.watermarkingTextValue().isEmpty) {
-                          return const fm.Material(color: fm.Colors.transparent);
-                        }
+                    children: [
+                      fm.Image.file(io.File(
+                        _imageProcessBloc.isToggleGrayscaled()
+                          ? _imageProcessBloc.getGrayscaledImagePath()
+                          : _imageProcessBloc.getOriginalImagePath(),
+                      ), key: _imageKey),
 
-                        return fm.Opacity(
-                          opacity: _imageProcessBloc.opacityValue() / 100,
-                          child: fm.Transform.rotate(
-                            angle: _imageProcessBloc.angleValue() * 3.14/180,
-                            child: fm.CustomPaint(
-                              painter: WatermarkPaint(
-                                zoom: _imageProcessBloc.zoomValue(),
-                                text: _imageProcessBloc.watermarkingTextValue(),
-                                width: constraint.widthConstraints().maxWidth,
-                                height: constraint.heightConstraints().maxHeight,
-                              ),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ), 
-                ],
-              ),
+                      fb.BlocBuilder<ImageProcessingBloc, ImageProcessingState>(
+                        bloc: _imageProcessBloc,
+                        buildWhen: (_, curr) => curr is SetRenderedImageSizeDone || curr is OpacityChanged || curr is ZoomChanged || curr is AngleChanged || curr is WatermarkingTextChanged,
+                        builder: (context, state) {
+                          if (_imageProcessBloc.renderedImageSize() != null) {
+                            if (_imageProcessBloc.watermarkingTextValue().isNotEmpty) {
+                              return fm.Container(
+                                width: _imageProcessBloc.renderedImageSize()!.width,
+                                height: _imageProcessBloc.renderedImageSize()!.height,
+                                clipBehavior: fm.Clip.hardEdge,
+                                decoration: const fm.BoxDecoration(),
+                                child: fm.Opacity(
+                                  opacity: _imageProcessBloc.opacityValue() / 100,
+                                  child: fm.Transform.rotate(
+                                    angle: _imageProcessBloc.angleValue() * 3.14/180,
+                                    child: fm.CustomPaint(
+                                      painter: WatermarkPaint(
+                                        zoom: _imageProcessBloc.zoomValue(),
+                                        text: _imageProcessBloc.watermarkingTextValue(),
+                                        width: _imageProcessBloc.renderedImageSize()!.width,
+                                        height: _imageProcessBloc.renderedImageSize()!.height,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              );
+                            }
+                          } else {
+                            fm.WidgetsBinding.instance.addPostFrameCallback((_) {
+                              final fm.RenderBox? renderBox = _imageKey.currentContext?.findRenderObject() as fm.RenderBox?;
+
+                              if (renderBox?.size == null || renderBox!.size.width == 0) {
+                                return;
+                              }
+
+                              _imageProcessBloc.add(SetRenderedImageSize(renderBox.size));
+                            });
+                          }
+
+                          return const fm.Material(color: fm.Colors.transparent);
+                        },
+                      ),
+                    ],
+                  );
+                }
+
+                return const fm.Center(
+                  child: fm.Text(
+                    'processing image',
+                    style: fm.TextStyle(fontSize: 16, color: fm.Color(0xffffffff))
+                  ),
+                );
+              },
             ),
           ),
 
