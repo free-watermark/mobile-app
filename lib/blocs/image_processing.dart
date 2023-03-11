@@ -162,6 +162,7 @@ class ImageProcessingBloc extends fb.Bloc<ImageProcessingEvent, ImageProcessingS
   bool _isImageLoaded = false;
   bool _isLoadingImage = true;
   fw.Size? _renderedImageSize;
+  late final fw.Size _originalImageSize;
 
   double _zoom = 0;
   double _angle = 45;
@@ -178,6 +179,10 @@ class ImageProcessingBloc extends fb.Bloc<ImageProcessingEvent, ImageProcessingS
   late final String _workingFileTempId;
   late final fi.FlutterIsolate _workerThread;
   late final isl.SendPort _workerThreadSendPort;
+
+  fw.Size originalImageSize() {
+    return _originalImageSize;
+  }
 
   fw.Size? renderedImageSize() {
     return _renderedImageSize;
@@ -331,6 +336,12 @@ class ImageProcessingBloc extends fb.Bloc<ImageProcessingEvent, ImageProcessingS
           }
 
           if (msg is String) {
+            if (msg.contains('image@meta:set')) {
+              final data = msg.split('.').last.split(',');
+
+              _originalImageSize = fw.Size(double.parse(data[0]), double.parse(data[1]));
+            }
+
             if (msg == 'image@grayscale:done') {
               add(ImageGrayscaleDone()); 
             }
@@ -394,6 +405,8 @@ Future<void> readAndRotateImage(isl.SendPort sendPort) async {
         } else {
           await img.encodeJpgFile('${tempDir.path}/$tempId', image!);
         }
+
+        sendPort.send('image@meta:set.${image!.width},${image!.height}');
 
         sendPort.send('image@read-rotate:done');
       }
