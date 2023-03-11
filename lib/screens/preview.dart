@@ -6,7 +6,6 @@ import 'dart:async' as asyncx;
 import 'package:image/image.dart' as img;
 import 'package:flutter/widgets.dart' as fw;
 import 'package:flutter/material.dart' as fm;
-import 'package:flutter/rendering.dart' as fr;
 import 'package:share_plus/share_plus.dart' as sp;
 import 'package:flutter_bloc/flutter_bloc.dart' as fb;
 import 'package:image_picker/image_picker.dart' as imgp;
