@@ -9,6 +9,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.3.6"
+  args:
+    dependency: transitive
+    description:
+      name: args
+      sha256: "4cab82a83ffef80b262ddedf47a0a8e56ee6fbf7fe21e6e768b02792034dd440"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.4.0"
   async:
     dependency: transitive
     description:
@@ -41,6 +49,22 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.2.1"
+  checked_yaml:
+    dependency: transitive
+    description:
+      name: checked_yaml
+      sha256: "3d1505d91afa809d177efd4eed5bb0eb65805097a1463abdd2add076effae311"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.0.2"
+  cli_util:
+    dependency: transitive
+    description:
+      name: cli_util
+      sha256: "66f86e916d285c1a93d3b79587d94bd71984a66aac4ff74e524cfa7877f1395c"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.3.5"
   clock:
     dependency: transitive
     description:
@@ -150,6 +174,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.0.4"
+  flutter_launcher_icons:
+    dependency: "direct dev"
+    description:
+      name: flutter_launcher_icons
+      sha256: "02dcaf49d405f652b7160e882bacfc02cb497041bb2eab2a49b1c393cf9aac12"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.12.0"
   flutter_lints:
     dependency: "direct dev"
     description:
@@ -248,6 +280,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.6.5"
+  json_annotation:
+    dependency: transitive
+    description:
+      name: json_annotation
+      sha256: c33da08e136c3df0190bd5bbe51ae1df4a7d96e7954d1d7249fea2968a72d317
+      url: "https://pub.dev"
+    source: hosted
+    version: "4.8.0"
   lints:
     dependency: transitive
     description:
@@ -400,6 +440,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "6.0.5"
+  screenshot:
+    dependency: "direct dev"
+    description:
+      name: screenshot
+      sha256: "30bb9fade6eb2578a1fc2e84f6b184141fc86883cda10988d4500ff00eb728e2"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.3.0"
   sky_engine:
     dependency: transitive
     description: flutter
@@ -501,6 +549,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "6.2.2"
+  yaml:
+    dependency: transitive
+    description:
+      name: yaml
+      sha256: "23812a9b125b48d4007117254bca50abb6c712352927eece9e155207b1db2370"
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.1.1"
 sdks:
   dart: ">=2.19.3 <3.0.0"
   flutter: ">=3.3.0"
