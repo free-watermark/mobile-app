@@ -21,18 +21,13 @@ platform :android do
     gradle(task: "test")
   end
 
-  desc "Submit a new Beta Build to Crashlytics Beta"
-  lane :beta do
-    gradle(task: "clean assembleRelease")
-    crashlytics
-  
-    # sh "your_script.sh"
-    # You can also use other beta testing services here
-  end
-
-  desc "Deploy a new version to the Google Play"
   lane :deploy do
     gradle(task: "clean assembleRelease")
-    upload_to_play_store
+
+    upload_to_play_store(
+      track: ENV('ANDROID_DEPLOY_TRACK') || "internal",
+      json_key: "../../free-watermark-fastlane-sa.json",
+      aab: "../build/app/outputs/bundle/release/app-release.aab"
+    )
   end
 end
