@@ -1,11 +1,17 @@
 
 import 'dart:io' as io;
+import 'dart:ui' as ui;
 import 'dart:async' as asyncx;
 
+import 'package:image/image.dart' as img;
 import 'package:flutter/widgets.dart' as fw;
 import 'package:flutter/material.dart' as fm;
+import 'package:flutter/rendering.dart' as fr;
+import 'package:share_plus/share_plus.dart' as sp;
 import 'package:flutter_bloc/flutter_bloc.dart' as fb;
+import 'package:image_picker/image_picker.dart' as imgp;
 
+import '../utils/image.dart';
 import '../blocs/image_processing.dart';
 import '../widgets/watermark_paint.dart';
 
@@ -56,6 +62,52 @@ class _PreviewScreenState extends fm.State<PreviewScreen> {
     super.dispose();
   }
 
+  Future<void> _exportImagePreview() async {
+    final ui.PictureRecorder recorder = ui.PictureRecorder();
+
+    fm.Canvas canvas = fm.Canvas(recorder);
+
+    final ui.Image image = await convertImageToFlutterUi(
+      (await img.decodeImageFile(_imageProcessBloc.isToggleGrayscaled()
+        ? _imageProcessBloc.getGrayscaledImagePath()
+        : _imageProcessBloc.getOriginalImagePath()))!);
+
+    canvas.drawImage(image, fw.Offset.zero, fm.Paint());
+
+    final scalingFactorY = _imageProcessBloc.originalImageSize().height / _imageProcessBloc.renderedImageSize()!.height;
+
+    paintWatermark(
+      canvas: canvas,
+      zoom: _imageProcessBloc.zoomValue(),
+      angle: _imageProcessBloc.angleValue(),
+      opacity: _imageProcessBloc.opacityValue(),
+      text: _imageProcessBloc.watermarkingTextValue(),
+      width: _imageProcessBloc.originalImageSize().width,
+      height: _imageProcessBloc.originalImageSize().height,
+      fontSize: _imageProcessBloc.originalImageSize().width * 0.04,
+      scalingFactorX: _imageProcessBloc.originalImageSize().width / _imageProcessBloc.renderedImageSize()!.width,
+      scalingFactorY: scalingFactorY,
+    ); 
+
+    final ui.Image processedUiImage = await recorder.endRecording().toImage(
+      _imageProcessBloc.originalImageSize().width.toInt(),
+      _imageProcessBloc.originalImageSize().height.toInt(),
+    );
+
+    final img.Image processedImage = img.Image.fromBytes(
+      numChannels: 4,
+      width: processedUiImage.width,
+      height: processedUiImage.height,
+      bytes: (await processedUiImage.toByteData())!.buffer,
+    );
+
+    if (await img.encodeJpgFile(_imageProcessBloc.getProcessedImagePath(), processedImage)) {
+      await sp.Share.shareXFiles(
+        [imgp.XFile(_imageProcessBloc.getProcessedImagePath())],
+      );
+    }
+  }
+
   fm.Widget _imagePreview() {
     return fm.Container(
       alignment: fm.Alignment.center,
@@ -77,7 +129,7 @@ class _PreviewScreenState extends fm.State<PreviewScreen> {
                   _imageProcessBloc.isToggleGrayscaled()
                     ? _imageProcessBloc.getGrayscaledImagePath()
                     : _imageProcessBloc.getOriginalImagePath(),
-                ), key: _imageKey),
+                ), fit: fm.BoxFit.contain, key: _imageKey),
 
                 fb.BlocBuilder<ImageProcessingBloc, ImageProcessingState>(
                   bloc: _imageProcessBloc,
@@ -90,18 +142,17 @@ class _PreviewScreenState extends fm.State<PreviewScreen> {
                           height: _imageProcessBloc.renderedImageSize()!.height,
                           clipBehavior: fm.Clip.hardEdge,
                           decoration: const fm.BoxDecoration(),
-                          child: fm.Opacity(
-                            opacity: _imageProcessBloc.opacityValue() / 100,
-                            child: fm.Transform.rotate(
-                              angle: _imageProcessBloc.angleValue() * 3.14/180,
-                              child: fm.CustomPaint(
-                                painter: WatermarkPaint(
-                                  zoom: _imageProcessBloc.zoomValue(),
-                                  text: _imageProcessBloc.watermarkingTextValue(),
-                                  width: _imageProcessBloc.renderedImageSize()!.width,
-                                  height: _imageProcessBloc.renderedImageSize()!.height,
-                                ),
-                              ),
+                          child: fm.CustomPaint(
+                            painter: WatermarkPaint(
+                              scalingFactorX: 0,
+                              scalingFactorY: 0,
+                              zoom: _imageProcessBloc.zoomValue(),
+                              angle: _imageProcessBloc.angleValue(),
+                              opacity: _imageProcessBloc.opacityValue(),
+                              text: _imageProcessBloc.watermarkingTextValue(),
+                              width: _imageProcessBloc.renderedImageSize()!.width,
+                              height: _imageProcessBloc.renderedImageSize()!.height,
+                              fontSize: _imageProcessBloc.renderedImageSize()!.width * 0.04,
                             ),
                           ),
                         );
@@ -345,10 +396,10 @@ class _PreviewScreenState extends fm.State<PreviewScreen> {
         backgroundColor: const fm.Color(0xff000000),
         actions: [
           fm.TextButton(
-            onPressed: () {},
+            onPressed: _exportImagePreview,
             child: fm.Row(
               children: const [
-                fm.Text('Save', style: fm.TextStyle(fontSize: 16, color: fm.Color(0xffffffff))),
+                fm.Text('Done', style: fm.TextStyle(fontSize: 16, color: fm.Color(0xffffffff))),
 
                 fm.SizedBox(width: 4),
 
