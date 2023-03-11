@@ -227,6 +227,10 @@ class ImageProcessingBloc extends fb.Bloc<ImageProcessingEvent, ImageProcessingS
     return '${getOriginalImagePath()}-grayscale';
   }
 
+  String getProcessedImagePath() {
+    return '${_workingDir.path}/processed.jpg';
+  }
+
   void dispose() {
     _workerThread.kill();
     _mainThreadReceiver.close();
@@ -241,6 +245,12 @@ class ImageProcessingBloc extends fb.Bloc<ImageProcessingEvent, ImageProcessingS
 
     if (grayscaledFile.existsSync()) {
       grayscaledFile.deleteSync();
+    }
+
+    final io.File processedFile = io.File(getProcessedImagePath());
+
+    if (processedFile.existsSync()) {
+      processedFile.deleteSync();
     }
   }
 
