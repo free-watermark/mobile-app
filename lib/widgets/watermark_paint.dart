@@ -16,7 +16,7 @@ class WatermarkPaint extends fm.CustomPainter {
 
   @override
   void paint(fm.Canvas canvas, fm.Size size) {
-    const double gapSize = 16;
+    const double gapSize = 32;
 
     final textStyle = fm.TextStyle(color: fm.Colors.white, fontSize: (8 + 4) * (1 + zoom / 100));
 
