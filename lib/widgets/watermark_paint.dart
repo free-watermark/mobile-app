@@ -10,8 +10,6 @@ void paintWatermark({
   required double height,
   required double opacity,
   required fm.Canvas canvas,
-  double scalingFactorX = 0,
-  double scalingFactorY = 0,
 }) {
   final double gapSizeX = width * 0.04;
   final double gapSizeY = height * 0.04;
@@ -79,8 +77,6 @@ class WatermarkPaint extends fm.CustomPainter {
   final double height;
   final double opacity;
   final double fontSize;
-  final double scalingFactorX;
-  final double scalingFactorY;
 
   const WatermarkPaint({
     required this.text,
@@ -90,8 +86,6 @@ class WatermarkPaint extends fm.CustomPainter {
     required this.height,
     required this.opacity,
     required this.fontSize,
-    required this.scalingFactorX,
-    required this.scalingFactorY,
   });
 
   @override
@@ -105,8 +99,6 @@ class WatermarkPaint extends fm.CustomPainter {
       canvas: canvas,
       opacity: opacity,
       fontSize: fontSize,
-      scalingFactorX: scalingFactorX,
-      scalingFactorY: scalingFactorY,
     );
   }
 

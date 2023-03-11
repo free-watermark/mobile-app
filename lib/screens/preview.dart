@@ -74,8 +74,6 @@ class _PreviewScreenState extends fm.State<PreviewScreen> {
 
     canvas.drawImage(image, fw.Offset.zero, fm.Paint());
 
-    final scalingFactorY = _imageProcessBloc.originalImageSize().height / _imageProcessBloc.renderedImageSize()!.height;
-
     paintWatermark(
       canvas: canvas,
       zoom: _imageProcessBloc.zoomValue(),
@@ -85,8 +83,6 @@ class _PreviewScreenState extends fm.State<PreviewScreen> {
       width: _imageProcessBloc.originalImageSize().width,
       height: _imageProcessBloc.originalImageSize().height,
       fontSize: _imageProcessBloc.originalImageSize().width * 0.04,
-      scalingFactorX: _imageProcessBloc.originalImageSize().width / _imageProcessBloc.renderedImageSize()!.width,
-      scalingFactorY: scalingFactorY,
     ); 
 
     final ui.Image processedUiImage = await recorder.endRecording().toImage(
@@ -144,8 +140,6 @@ class _PreviewScreenState extends fm.State<PreviewScreen> {
                           decoration: const fm.BoxDecoration(),
                           child: fm.CustomPaint(
                             painter: WatermarkPaint(
-                              scalingFactorX: 0,
-                              scalingFactorY: 0,
                               zoom: _imageProcessBloc.zoomValue(),
                               angle: _imageProcessBloc.angleValue(),
                               opacity: _imageProcessBloc.opacityValue(),
