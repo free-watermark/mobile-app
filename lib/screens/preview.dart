@@ -6,6 +6,7 @@ import 'dart:async' as asyncx;
 import 'package:image/image.dart' as img;
 import 'package:flutter/widgets.dart' as fw;
 import 'package:flutter/material.dart' as fm;
+import 'package:flutter/cupertino.dart' as fc;
 import 'package:share_plus/share_plus.dart' as sp;
 import 'package:flutter_bloc/flutter_bloc.dart' as fb;
 import 'package:image_picker/image_picker.dart' as imgp;
@@ -28,20 +29,7 @@ class _PreviewScreenState extends fm.State<PreviewScreen> {
 
   final fw.GlobalKey _imageKey = fw.GlobalKey();
 
-  asyncx.Timer? _watermarkingTextInputDebounce;
-
-  fm.Widget _featureButton(fm.Widget icon, Function() func) {
-    return fm.GestureDetector(
-      onTap: () {
-        if (_imageProcessBloc.isGrayscaling() || _imageProcessBloc.isLoadingImage()) {
-          return;
-        }
-
-        func();
-      },
-      child: icon,
-    );
-  }
+  asyncx.Timer? _watermarkingTextInputDebounce; 
 
   @override
   void initState() {
@@ -62,46 +50,106 @@ class _PreviewScreenState extends fm.State<PreviewScreen> {
   }
 
   Future<void> _exportImagePreview() async {
-    final ui.PictureRecorder recorder = ui.PictureRecorder();
+    if (_imageProcessBloc.isHasChangesSinceLastProcessedBeingRendered()) {
+      _imageProcessBloc.add(FinalProcessing());
 
-    fm.Canvas canvas = fm.Canvas(recorder);
+      late Function popDialogContext;
 
-    final ui.Image image = await convertImageToFlutterUi(
-      (await img.decodeImageFile(_imageProcessBloc.isToggleGrayscaled()
-        ? _imageProcessBloc.getGrayscaledImagePath()
-        : _imageProcessBloc.getOriginalImagePath()))!);
+      if (io.Platform.isIOS) {
+        fc.showCupertinoDialog(
+          context: context,
+          builder: (context) {
+            popDialogContext = () => fc.Navigator.of(context).pop();
 
-    canvas.drawImage(image, fw.Offset.zero, fm.Paint());
+            return fc.WillPopScope(
+              onWillPop: () => Future.value(false),
+              child: const fc.CupertinoAlertDialog(
+                title: fc.Text('exporting watermarked image'),
+                content: fc.CupertinoActivityIndicator(radius: 16),
+              ),
+            );
+          },
+        );
+      } else {
+        fm.showDialog(
+          context: context,
+          builder: (context) {
+            popDialogContext = () => fm.Navigator.of(context).pop();
 
-    paintWatermark(
-      canvas: canvas,
-      zoom: _imageProcessBloc.zoomValue(),
-      angle: _imageProcessBloc.angleValue(),
-      opacity: _imageProcessBloc.opacityValue(),
-      text: _imageProcessBloc.watermarkingTextValue(),
-      width: _imageProcessBloc.originalImageSize().width,
-      height: _imageProcessBloc.originalImageSize().height,
-      fontSize: _imageProcessBloc.originalImageSize().width * 0.04,
-    ); 
+            return fm.WillPopScope(
+              onWillPop: () => Future.value(false),
+              child: fm.AlertDialog(
+                title: const fm.Text('exporting watermarked image'),
+                content: fm.Container(
+                  width: 64,
+                  height: 64,
+                  alignment: fm.Alignment.center,
+                  child: const fm.CircularProgressIndicator(color: fm.Color(0xfff56300)),
+                ),
+              ),
+            );
+          },
+        );
+      }
 
-    final ui.Image processedUiImage = await recorder.endRecording().toImage(
-      _imageProcessBloc.originalImageSize().width.toInt(),
-      _imageProcessBloc.originalImageSize().height.toInt(),
-    );
+      final ui.Image image = await convertImageToFlutterUi(
+        (await img.decodeImageFile(_imageProcessBloc.isToggleGrayscaled()
+          ? _imageProcessBloc.getGrayscaledImagePath()
+          : _imageProcessBloc.getOriginalImagePath()))!);
 
-    final img.Image processedImage = img.Image.fromBytes(
-      numChannels: 4,
-      width: processedUiImage.width,
-      height: processedUiImage.height,
-      bytes: (await processedUiImage.toByteData())!.buffer,
-    );
+      final ui.PictureRecorder recorder = ui.PictureRecorder();
 
-    if (await img.encodeJpgFile(_imageProcessBloc.getProcessedImagePath(), processedImage)) {
-      await sp.Share.shareXFiles(
-        [imgp.XFile(_imageProcessBloc.getProcessedImagePath())],
+      fm.Canvas canvas = fm.Canvas(recorder);
+
+      canvas.drawImage(image, fw.Offset.zero, fm.Paint());
+
+      paintWatermark(
+        canvas: canvas,
+        zoom: _imageProcessBloc.zoomValue(),
+        angle: _imageProcessBloc.angleValue(),
+        opacity: _imageProcessBloc.opacityValue(),
+        text: _imageProcessBloc.watermarkingTextValue(),
+        width: _imageProcessBloc.originalImageSize().width,
+        height: _imageProcessBloc.originalImageSize().height,
+        fontSize: _imageProcessBloc.originalImageSize().width * 0.04,
+      ); 
+
+      final ui.Image processedUiImage = await recorder.endRecording().toImage(
+        _imageProcessBloc.originalImageSize().width.toInt(),
+        _imageProcessBloc.originalImageSize().height.toInt(),
       );
+
+      final img.Image processedImage = img.Image.fromBytes(
+        numChannels: 4,
+        width: processedUiImage.width,
+        height: processedUiImage.height,
+        bytes: (await processedUiImage.toByteData())!.buffer,
+      );
+
+      await img.encodeJpgFile(_imageProcessBloc.getProcessedImagePath(), processedImage);
+
+      popDialogContext();
+
+      _imageProcessBloc.add(DoneFinalProcessing());
     }
+
+    await sp.Share.shareXFiles(
+      [imgp.XFile(_imageProcessBloc.getProcessedImagePath())],
+    );
   }
+
+  fm.Widget _featureButton(fm.Widget icon, Function() func) {
+    return fm.GestureDetector(
+      onTap: () {
+        if (_imageProcessBloc.isGrayscaling() || _imageProcessBloc.isLoadingImage() || _imageProcessBloc.isFinalProcessing()) {
+          return;
+        }
+
+        func();
+      },
+      child: icon,
+    );
+  }  
 
   fm.Widget _imagePreview() {
     return fm.Container(
@@ -388,17 +436,23 @@ class _PreviewScreenState extends fm.State<PreviewScreen> {
       appBar: fm.AppBar(
         backgroundColor: const fm.Color(0xff000000),
         actions: [
-          fm.TextButton(
-            onPressed: _exportImagePreview,
-            child: fm.Row(
-              children: const [
-                fm.Text('Done', style: fm.TextStyle(fontSize: 16, color: fm.Color(0xffffffff))),
+          fb.BlocBuilder<ImageProcessingBloc, ImageProcessingState>(
+            bloc: _imageProcessBloc,
+            buildWhen: (_, curr) => curr is DoingFinalProcessing || curr is FinalProcessed,
+            builder: (context, _) {
+              return fm.TextButton(
+                onPressed: _imageProcessBloc.isFinalProcessing() ? null : _exportImagePreview,
+                child: fm.Row(
+                  children: const [
+                    fm.Text('Done', style: fm.TextStyle(fontSize: 16, color: fm.Color(0xffffffff))),
 
-                fm.SizedBox(width: 4),
+                    fm.SizedBox(width: 4),
 
-                fm.Icon(fm.Icons.done, size: 26, color: fm.Color(0xffffffff)),
-              ],
-            ),
+                    fm.Icon(fm.Icons.done, size: 26, color: fm.Color(0xffffffff)),
+                  ],
+                ),
+              );
+            },
           ),
         ],
       ),
