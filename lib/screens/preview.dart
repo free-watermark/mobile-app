@@ -312,17 +312,20 @@ class _PreviewScreenState extends fm.State<PreviewScreen> {
 
                 if (currentEditMode == EditMode.angle) {
                   max = 360;
+                  divisions = 360;
                   value = _imageProcessBloc.angleValue();
                   updateVal = (newVal) => _imageProcessBloc.add(AngleChange(newVal));
                 }
 
                 if (currentEditMode == EditMode.zoom) {
                   min = -32;
+                  divisions = 132;
                   value = _imageProcessBloc.zoomValue();
                   updateVal = (newVal) => _imageProcessBloc.add(ZoomChange(newVal));
                 }
 
                 if (currentEditMode == EditMode.opacity) {
+                  divisions = 100;
                   value = _imageProcessBloc.opacityValue();
                   updateVal = (newVal) => _imageProcessBloc.add(OpacityChange(newVal));
                 }
@@ -347,17 +350,20 @@ class _PreviewScreenState extends fm.State<PreviewScreen> {
                       style: const fm.TextStyle(fontSize: 16, color: fm.Color(0xfff56300)),
                     ),
 
-                    fm.Expanded(child: fm.Slider(
-                      min: min,
-                      max: max,
-                      value: value,
-                      divisions: divisions,
-                      onChanged: updateVal,
-                      thumbColor: const fm.Color(0xfff56400),
-                      activeColor: const fm.Color(0xfff56400),
-                      inactiveColor: const fm.Color(0xffffffff),
-                      secondaryActiveColor: const fm.Color(0xffffffff),
-                    ),),
+                    fm.Expanded(
+                      child: fm.Slider(
+                        min: min,
+                        max: max,
+                        value: value,
+                        divisions: divisions,
+                        onChanged: updateVal,
+                        label: value.toInt().toString(),
+                        thumbColor: const fm.Color(0xfff56400),
+                        activeColor: const fm.Color(0xfff56400),
+                        inactiveColor: const fm.Color(0xffffffff),
+                        secondaryActiveColor: const fm.Color(0xffffffff),
+                      ),
+                    ),
 
                     fm.Text(
                       max.toInt().toString(),
