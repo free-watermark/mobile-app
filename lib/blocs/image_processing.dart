@@ -84,6 +84,24 @@ class ImageGrayscaleToggled extends ImageProcessingState {
   List<Object> get props => [isGrayscaled];
 }
 
+class FinalProcessSizeReductionToChanged extends ImageProcessingState {
+  final double value;
+
+  FinalProcessSizeReductionToChanged(this.value);
+
+  @override
+  List<Object> get props => [value];
+}
+
+class FinalProcessQualityChanged extends ImageProcessingState {
+  final double value;
+
+  FinalProcessQualityChanged(this.value);
+
+  @override
+  List<Object> get props => [value];
+}
+
 abstract class ImageProcessingEvent extends eq.Equatable {
   @override
   List<Object> get props => [];
@@ -146,6 +164,24 @@ class SetRenderedImageSize extends ImageProcessingEvent {
   List<Object> get props => [size];
 }
 
+class SetFinalProcessSizeReductionTo extends ImageProcessingEvent {
+  final double value;
+
+  SetFinalProcessSizeReductionTo(this.value);
+
+  @override
+  List<Object> get props => [value];
+}
+
+class SetFinalProcessQuality extends ImageProcessingEvent {
+  final double value;
+
+  SetFinalProcessQuality(this.value);
+
+  @override
+  List<Object> get props => [value];
+}
+
 class FinalProcessing extends ImageProcessingEvent {}
 
 class DoneFinalProcessing extends ImageProcessingEvent {}
@@ -156,6 +192,8 @@ enum EditMode {
   zoom,
   angle,
   opacity,
+  quality,
+  sizeReduction,
 }
 
 class ChangeEditMode extends ImageProcessingEvent {
@@ -175,6 +213,8 @@ class ImageProcessingBloc extends fb.Bloc<ImageProcessingEvent, ImageProcessingS
   double _zoom = 0;
   double _angle = 45;
   double _opacity = 64;
+  double _quality = 64;
+  double _sizeReductionTo = 64;
   String _watermarkingText = '';
   bool _grayscaleToggled = false;
   bool _isFinalProcessing = false;
@@ -189,6 +229,14 @@ class ImageProcessingBloc extends fb.Bloc<ImageProcessingEvent, ImageProcessingS
   late final String _workingFileTempId;
   late final fi.FlutterIsolate _workerThread;
   late final isl.SendPort _workerThreadSendPort;
+
+  double finalProcessingQuality() {
+    return _quality;
+  }
+
+  double finalProcessingSizeReductionTo() {
+    return _sizeReductionTo;
+  }
 
   bool isFinalProcessing() {
     return _isFinalProcessing;
@@ -278,6 +326,22 @@ class ImageProcessingBloc extends fb.Bloc<ImageProcessingEvent, ImageProcessingS
   }
 
   ImageProcessingBloc(this.imageFile): super(ImageLoading()) {
+    on<SetFinalProcessQuality>((event, emit) {
+      _quality = event.value;
+
+      _isHasChangesSinceLastProcessedBeingRendered = true;
+
+      emit(FinalProcessQualityChanged(event.value));
+    });
+
+    on<SetFinalProcessSizeReductionTo>((event, emit) {
+      _sizeReductionTo = event.value;
+
+      _isHasChangesSinceLastProcessedBeingRendered = true;
+
+      emit(FinalProcessSizeReductionToChanged(event.value));
+    });
+
     on<DoneFinalProcessing>((_, emit) {
       _isFinalProcessing = false;
 
