@@ -44,43 +44,60 @@ class _HomeScreenState extends fm.State<HomeScreen> {
     }));
   }
 
+  fm.Widget _renderPickFromSourceButton(fm.Icon icon, String text, Function()? onPick) {
+    return fm.GestureDetector(
+      onTap: onPick,
+      child: fm.Row(
+        crossAxisAlignment: fm.CrossAxisAlignment.center,
+        children: [
+          icon,
+
+          const fm.SizedBox(width: 16),
+
+          fm.Text(text),
+        ],
+      ),
+    );
+  }
+
   @override
   fm.Widget build(fm.BuildContext context) {
-    const imageIcon = fm.Icon(fm.Icons.image, size: 64);
-    const cameraIcon = fm.Icon(fm.Icons.camera, size: 64);
-    const fileIcon = fm.Icon(fm.Icons.file_open, size: 64);
+    final sourceMap = [{
+      'label': 'Gallery',
+      'icon': const fm.Icon(fm.Icons.image, size: 64),
+      'picker': () => _openPicker(() => _imagePicker.pickImage(source: imgp.ImageSource.gallery)),
+    }, {
+      'label': 'Camera',
+      'icon': const fm.Icon(fm.Icons.camera, size: 64),
+      'picker': () => _openPicker(() => _imagePicker.pickImage(source: imgp.ImageSource.camera)),
+    }, {
+      'label': 'Explorer',
+      'icon': const fm.Icon(fm.Icons.file_open, size: 64),
+      'picker': () => _openPicker(() => fp.FilePicker.platform.pickFiles(
+        type: fp.FileType.custom, allowedExtensions: ['jpg', 'png'])),
+    }];
 
     return fm.Scaffold(
       body: fm.Center(
-        child: fm.Column(
+        child: fm.IntrinsicWidth(child: fm.Column(
           mainAxisAlignment: fm.MainAxisAlignment.center,
           crossAxisAlignment: fm.CrossAxisAlignment.center,
           children: [
-            fm.GestureDetector( 
-              onTap: () => _openPicker(() => _imagePicker.pickImage(source: imgp.ImageSource.gallery)),
-              child: imageIcon,
-            ),
+            ...sourceMap.map<List<fm.Widget>>((s) => [
+              _renderPickFromSourceButton(
+                s['icon'] as fm.Icon,
+                s['label'] as String,
+                s['picker'] as Function()?
+              ),
 
-            const fm.SizedBox(height: 8),
+              const fm.SizedBox(height: 8),
+            ]).expand((elem) => elem).toList(),
 
-            fm.GestureDetector( 
-              onTap: () => _openPicker(() => _imagePicker.pickImage(source: imgp.ImageSource.camera)),
-              child: cameraIcon,
-            ),
-
-            const fm.SizedBox(height: 8),
-
-            fm.GestureDetector( 
-              onTap: () => _openPicker(() => fp.FilePicker.platform.pickFiles(
-                type: fp.FileType.custom, allowedExtensions: ['jpg', 'png'])),
-              child: fileIcon,
-            ),
-
-            const fm.SizedBox(height: 8),
+            const fm.SizedBox(height: 12),
 
             const fm.Text('Choose an image for watermarking'),
           ],
-        ),
+        ),),
       ),
     );
   }
