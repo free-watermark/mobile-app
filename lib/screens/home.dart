@@ -72,7 +72,7 @@ class _HomeScreenState extends fm.State<HomeScreen> {
 
             fm.GestureDetector( 
               onTap: () => _openPicker(() => fp.FilePicker.platform.pickFiles(
-                type: fp.FileType.custom, allowedExtensions: ['.jpg', '.png'])),
+                type: fp.FileType.custom, allowedExtensions: ['jpg', 'png'])),
               child: fileIcon,
             ),
 
