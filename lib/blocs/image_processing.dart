@@ -170,6 +170,7 @@ class ImageProcessingBloc extends fb.Bloc<ImageProcessingEvent, ImageProcessingS
   String _watermarkingText = '';
   bool _grayscaleToggled = false;
   EditMode _editMode = EditMode.none; 
+  bool _isHasChangesSinceLastProcessedBeingRendered = true;
 
   final dynamic imageFile;
 
@@ -179,6 +180,10 @@ class ImageProcessingBloc extends fb.Bloc<ImageProcessingEvent, ImageProcessingS
   late final String _workingFileTempId;
   late final fi.FlutterIsolate _workerThread;
   late final isl.SendPort _workerThreadSendPort;
+
+  bool isHasChangesSinceLastProcessedBeingRendered() {
+    return _isHasChangesSinceLastProcessedBeingRendered;
+  }
 
   fw.Size originalImageSize() {
     return _originalImageSize;
@@ -269,11 +274,15 @@ class ImageProcessingBloc extends fb.Bloc<ImageProcessingEvent, ImageProcessingS
     on<AngleChange>((event, emit) {
       _angle = event.angle;
 
-      emit(AngleChanged(event.angle));
+      _isHasChangesSinceLastProcessedBeingRendered = true;
+
+      emit(AngleChanged(event.angle)); 
     });
 
     on<OpacityChange>((event, emit) {
       _opacity = event.opacity;
+
+      _isHasChangesSinceLastProcessedBeingRendered = true;
 
       emit(OpacityChanged(event.opacity));
     });
@@ -281,11 +290,15 @@ class ImageProcessingBloc extends fb.Bloc<ImageProcessingEvent, ImageProcessingS
     on<ZoomChange>((event, emit) {
       _zoom = event.zoom;
 
+      _isHasChangesSinceLastProcessedBeingRendered = true;
+
       emit(ZoomChanged(event.zoom));
     });
 
     on<WatermarkingTextChange>((event, emit) {
       _watermarkingText = event.text;
+
+      _isHasChangesSinceLastProcessedBeingRendered = true;
 
       emit(WatermarkingTextChanged(event.text));
     });
@@ -368,6 +381,8 @@ class ImageProcessingBloc extends fb.Bloc<ImageProcessingEvent, ImageProcessingS
 
     on<ImageGrayscaleToggle>((_, emit) {
       _grayscaleToggled = !_grayscaleToggled;
+
+      _isHasChangesSinceLastProcessedBeingRendered = true;
 
       emit(ImageGrayscaleToggled(_grayscaleToggled));
     });
