@@ -26,6 +26,10 @@ class ImageGrayscaling extends ImageProcessingState {}
 
 class ImageGrayscaled extends ImageProcessingState {}
 
+class DoingFinalProcessing extends ImageProcessingState {}
+
+class FinalProcessed extends ImageProcessingState {}
+
 class WatermarkingTextChanged extends ImageProcessingState {
   final String text;
 
@@ -142,6 +146,10 @@ class SetRenderedImageSize extends ImageProcessingEvent {
   List<Object> get props => [size];
 }
 
+class FinalProcessing extends ImageProcessingEvent {}
+
+class DoneFinalProcessing extends ImageProcessingEvent {}
+
 enum EditMode {
   none,
   text,
@@ -169,6 +177,7 @@ class ImageProcessingBloc extends fb.Bloc<ImageProcessingEvent, ImageProcessingS
   double _opacity = 64;
   String _watermarkingText = '';
   bool _grayscaleToggled = false;
+  bool _isFinalProcessing = false;
   EditMode _editMode = EditMode.none; 
   bool _isHasChangesSinceLastProcessedBeingRendered = true;
 
@@ -180,6 +189,10 @@ class ImageProcessingBloc extends fb.Bloc<ImageProcessingEvent, ImageProcessingS
   late final String _workingFileTempId;
   late final fi.FlutterIsolate _workerThread;
   late final isl.SendPort _workerThreadSendPort;
+
+  bool isFinalProcessing() {
+    return _isFinalProcessing;
+  }
 
   bool isHasChangesSinceLastProcessedBeingRendered() {
     return _isHasChangesSinceLastProcessedBeingRendered;
@@ -265,6 +278,20 @@ class ImageProcessingBloc extends fb.Bloc<ImageProcessingEvent, ImageProcessingS
   }
 
   ImageProcessingBloc(this.imageFile): super(ImageLoading()) {
+    on<DoneFinalProcessing>((_, emit) {
+      _isFinalProcessing = false;
+
+      emit(FinalProcessed());
+    });
+
+    on<FinalProcessing>((_, emit) {
+      _isFinalProcessing = true;
+
+      _isHasChangesSinceLastProcessedBeingRendered = false;
+
+      emit(DoingFinalProcessing());
+    });
+
     on<SetRenderedImageSize>((event, emit) {
       _renderedImageSize = event.size;
 
