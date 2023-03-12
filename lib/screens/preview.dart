@@ -303,6 +303,8 @@ class _PreviewScreenState extends fm.State<PreviewScreen> {
             return fb.BlocBuilder<ImageProcessingBloc, ImageProcessingState>(
               buildWhen: (_, curr) => curr is AngleChanged || curr is OpacityChanged || curr is ZoomChanged || curr is FinalProcessQualityChanged || curr is FinalProcessSizeReductionToChanged,
               builder: (context, state) {
+                int? divisions;
+                double min = 0;
                 double max = 100;
                 double value = 0;
 
@@ -315,6 +317,7 @@ class _PreviewScreenState extends fm.State<PreviewScreen> {
                 }
 
                 if (currentEditMode == EditMode.zoom) {
+                  min = -32;
                   value = _imageProcessBloc.zoomValue();
                   updateVal = (newVal) => _imageProcessBloc.add(ZoomChange(newVal));
                 }
@@ -326,24 +329,42 @@ class _PreviewScreenState extends fm.State<PreviewScreen> {
 
                 if (currentEditMode == EditMode.quality) {
                   value = _imageProcessBloc.finalProcessingQuality();
+                  divisions = 100;
                   updateVal = (newVal) => _imageProcessBloc.add(SetFinalProcessQuality(newVal));
                 }
 
                 if (currentEditMode == EditMode.sizeReduction) {
+                  divisions = 100;
                   value = _imageProcessBloc.finalProcessingSizeReductionTo();
                   updateVal = (newVal) => _imageProcessBloc.add(SetFinalProcessSizeReductionTo(newVal));
                 }
 
-                return fm.Slider(
-                  min: 0,
-                  max: max,
-                  value: value,
-                  onChanged: updateVal,
-                  thumbColor: const fm.Color(0xfff56400),
-                  activeColor: const fm.Color(0xfff56400),
-                  inactiveColor: const fm.Color(0xffffffff),
-                  secondaryActiveColor: const fm.Color(0xffffffff),
-                );
+                return fm.Row(
+                  mainAxisAlignment: fm.MainAxisAlignment.center,
+                  children: [
+                    fm.Text(
+                      min.toInt().toString(),
+                      style: const fm.TextStyle(fontSize: 16, color: fm.Color(0xfff56300)),
+                    ),
+
+                    fm.Expanded(child: fm.Slider(
+                      min: min,
+                      max: max,
+                      value: value,
+                      divisions: divisions,
+                      onChanged: updateVal,
+                      thumbColor: const fm.Color(0xfff56400),
+                      activeColor: const fm.Color(0xfff56400),
+                      inactiveColor: const fm.Color(0xffffffff),
+                      secondaryActiveColor: const fm.Color(0xffffffff),
+                    ),),
+
+                    fm.Text(
+                      max.toInt().toString(),
+                      style: const fm.TextStyle(fontSize: 16, color: fm.Color(0xfff56300)),
+                    ),
+                  ],
+                ); 
               },
             ); 
           }
