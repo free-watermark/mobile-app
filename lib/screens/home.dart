@@ -1,4 +1,5 @@
 
+import 'package:get_it/get_it.dart' as gi;
 import 'package:flutter/material.dart' as fm;
 import 'package:file_picker/file_picker.dart' as fp;
 import 'package:flutter_bloc/flutter_bloc.dart' as fb;
@@ -6,6 +7,7 @@ import 'package:image_picker/image_picker.dart' as imgp;
 
 import 'preview.dart';
 import '../blocs/image_processing.dart';
+import '../services/image_picker.dart';
 
 class HomeScreen extends fm.StatefulWidget {
   const HomeScreen({super.key});
@@ -17,7 +19,7 @@ class HomeScreen extends fm.StatefulWidget {
 class _HomeScreenState extends fm.State<HomeScreen> {
   bool _isPickingImage = false;
 
-  final imgp.ImagePicker _imagePicker = imgp.ImagePicker();
+  final ImagePicker _imagePicker = gi.GetIt.I.get<ImagePicker>();
 
   _openPicker(Function picker) async {
     final navigator = fm.Navigator.of(context);
