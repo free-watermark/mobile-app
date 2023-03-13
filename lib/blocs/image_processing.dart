@@ -22,6 +22,15 @@ class ImageLoading extends ImageProcessingState {}
 
 class ImageLoaded extends ImageProcessingState {}
 
+class ImageLoadFailed extends ImageProcessingState {
+  final String error;
+
+  ImageLoadFailed(this.error);
+
+  @override
+  List<Object> get props => [error];
+}
+
 class ImageGrayscaling extends ImageProcessingState {}
 
 class ImageGrayscaled extends ImageProcessingState {}
@@ -110,6 +119,15 @@ abstract class ImageProcessingEvent extends eq.Equatable {
 class SetRenderedImageSizeDone extends ImageProcessingState {}
 
 class LoadImage extends ImageProcessingEvent {}
+
+class LoadImageFail extends ImageProcessingEvent {
+  final String error;
+
+  LoadImageFail(this.error);
+
+  @override
+  List<Object> get props => [];
+}
 
 class ImageGrayscale extends ImageProcessingEvent {}
 
@@ -326,6 +344,10 @@ class ImageProcessingBloc extends fb.Bloc<ImageProcessingEvent, ImageProcessingS
   }
 
   ImageProcessingBloc(this.imageFile): super(ImageLoading()) {
+    on<LoadImageFail>((event, emit) {
+      emit(ImageLoadFailed(event.error));
+    });
+
     on<SetFinalProcessQuality>((event, emit) {
       _quality = event.value;
 
@@ -440,6 +462,13 @@ class ImageProcessingBloc extends fb.Bloc<ImageProcessingEvent, ImageProcessingS
           }
 
           if (msg is String) {
+            if (msg.contains('image@read-rotate:fail')) {
+              final String error =
+                String.fromCharCodes(cvrt.base64Decode(msg.split('.')[1]));
+
+              add(LoadImageFail(error));
+            }
+
             if (msg.contains('image@meta:set')) {
               final data = msg.split('.').last.split(',');
 
@@ -501,7 +530,13 @@ Future<void> readAndRotateImage(isl.SendPort sendPort) async {
         return;
       }
 
-      image = await img.decodeImageFile(imgPath);
+      try {
+        image = await img.decodeImageFile(imgPath);
+      } catch (err) {
+        sendPort.send('image@read-rotate:fail.${cvrt.base64Encode(cvrt.utf8.encode(err.toString()))}');
+
+        return;
+      }
 
       if (image != null) {
         if (image!.width > image!.height) {

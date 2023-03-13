@@ -31,11 +31,24 @@ class _PreviewScreenState extends fm.State<PreviewScreen> {
 
   asyncx.Timer? _watermarkingTextInputDebounce; 
 
+  late final asyncx.StreamSubscription _listenOnImageLoadFailure;
+
   @override
   void initState() {
     super.initState();
 
     _imageProcessBloc = context.read<ImageProcessingBloc>();
+
+    _listenOnImageLoadFailure = _imageProcessBloc.stream.listen((event) {
+      if (event is ImageLoadFailed) {
+        fm.Navigator.of(context).pop<String>(event.error);
+        return;
+      }
+
+      if (event is ImageLoaded) {
+        _listenOnImageLoadFailure.cancel();
+      }
+    });
 
     _imageProcessBloc.add(LoadImage());
   }
@@ -43,6 +56,8 @@ class _PreviewScreenState extends fm.State<PreviewScreen> {
   @override
   void dispose() {
     _watermarkingTextInputDebounce?.cancel();
+
+    _listenOnImageLoadFailure.cancel();
 
     _imageProcessBloc.dispose();
 

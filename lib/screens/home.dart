@@ -1,13 +1,16 @@
 
+import 'dart:io' as io;
+
 import 'package:get_it/get_it.dart' as gi;
 import 'package:flutter/material.dart' as fm;
+import 'package:flutter/cupertino.dart' as fc;
 import 'package:file_picker/file_picker.dart' as fp;
 import 'package:flutter_bloc/flutter_bloc.dart' as fb;
 import 'package:image_picker/image_picker.dart' as imgp;
 
 import 'preview.dart';
-import '../blocs/image_processing.dart';
 import '../services/image_picker.dart';
+import '../blocs/image_processing.dart';
 
 class HomeScreen extends fm.StatefulWidget {
   const HomeScreen({super.key});
@@ -30,7 +33,40 @@ class _HomeScreenState extends fm.State<HomeScreen> {
 
     _isPickingImage = true;
 
-    final dynamic img = await picker();
+    dynamic img;
+
+    try {
+      img = await picker();
+    } catch (err) {
+      _isPickingImage = false;
+
+      if (io.Platform.isIOS) {
+        await fc.showCupertinoDialog(
+          context: context,
+          barrierDismissible: true,
+          builder: (context) {
+            return const fc.CupertinoAlertDialog(
+              content: fm.Text('please try another one or from other source'),
+              title: fm.Text('fail to pick an image'),
+            );
+          }
+        );
+        return;
+      }
+
+      await fm.showDialog(
+        context: context,
+        barrierDismissible: true,
+        builder: (context) {
+          return const fm.AlertDialog(
+            content: fm.Text('please try another one or from other source'),
+            title: fm.Text('fail to pick an image'),
+          );
+        },
+      );
+
+      return;
+    }
 
     _isPickingImage = false;
 
@@ -38,12 +74,41 @@ class _HomeScreenState extends fm.State<HomeScreen> {
       return;
     }
 
-    await navigator.push(fm.MaterialPageRoute(builder: (context) {
+    final error = await navigator.push<String>(fm.MaterialPageRoute(builder: (context) {
       return fb.BlocProvider(
         create: (_) => ImageProcessingBloc(img),
         child: const PreviewScreen(),
       );
     }));
+
+    if (error != null && error.isNotEmpty) {
+      Future.delayed(const Duration(milliseconds: 128), () async {
+        if (io.Platform.isIOS) {
+          await fc.showCupertinoDialog(
+            context: context,
+            barrierDismissible: true,
+            builder: (context) {
+              return const fc.CupertinoAlertDialog(
+                title: fm.Text('fail to read image'),
+                content: fm.Text('something went wrong'),
+              );
+            }
+          );
+          return;
+        }
+
+        await fm.showDialog(
+          context: context,
+          barrierDismissible: true,
+          builder: (context) {
+            return const fm.AlertDialog(
+              title: fm.Text('fail to read image'),
+              content: fm.Text('something went wrong'),
+            );
+          },
+        );
+      });
+    }
   }
 
   fm.Widget _renderPickFromSourceButton(fm.Icon icon, String text, Function()? onPick) {
