@@ -48,3 +48,8 @@ app.*.map.json
 free-watermark-fastlane-sa.json
 
 *.jks
+
+ios_simulator_id
+
+generated/screenshots/*
+!generated/screenshots/.gitkeep
