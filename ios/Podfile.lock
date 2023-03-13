@@ -38,6 +38,8 @@ PODS:
     - Flutter
   - image_picker_ios (0.0.1):
     - Flutter
+  - integration_test (0.0.1):
+    - Flutter
   - path_provider_foundation (0.0.1):
     - Flutter
     - FlutterMacOS
@@ -53,6 +55,7 @@ DEPENDENCIES:
   - Flutter (from `Flutter`)
   - flutter_isolate (from `.symlinks/plugins/flutter_isolate/ios`)
   - image_picker_ios (from `.symlinks/plugins/image_picker_ios/ios`)
+  - integration_test (from `.symlinks/plugins/integration_test/ios`)
   - path_provider_foundation (from `.symlinks/plugins/path_provider_foundation/ios`)
   - share_plus (from `.symlinks/plugins/share_plus/ios`)
 
@@ -72,6 +75,8 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/flutter_isolate/ios"
   image_picker_ios:
     :path: ".symlinks/plugins/image_picker_ios/ios"
+  integration_test:
+    :path: ".symlinks/plugins/integration_test/ios"
   path_provider_foundation:
     :path: ".symlinks/plugins/path_provider_foundation/ios"
   share_plus:
@@ -84,6 +89,7 @@ SPEC CHECKSUMS:
   Flutter: f04841e97a9d0b0a8025694d0796dd46242b2854
   flutter_isolate: 0edf5081826d071adf21759d1eb10ff5c24503b5
   image_picker_ios: 4a8aadfbb6dc30ad5141a2ce3832af9214a705b5
+  integration_test: a1e7d09bd98eca2fc37aefd79d4f41ad37bdbbe5
   path_provider_foundation: c68054786f1b4f3343858c1e1d0caaded73f0be9
   SDWebImage: fd7e1a22f00303e058058278639bf6196ee431fe
   share_plus: 056a1e8ac890df3e33cb503afffaf1e9b4fbae68
