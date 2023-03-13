@@ -53,7 +53,7 @@ void main() {
 
     await tester.tap(ft.find.text('Gallery'));
 
-    await tester.pumpAndSettle();
+    await tester.pumpAndSettle(const Duration(seconds: 2));
 
     ft.expect(ft.find.text('processing image'), ft.findsOneWidget);
 
@@ -61,50 +61,58 @@ void main() {
 
     ft.expect(ft.find.byType(fm.Image), ft.findsOneWidget);
 
-    await tester.pumpAndSettle();
-
     await tester.tap(ft.find.byIcon(fm.Icons.font_download));
 
-    await tester.pumpAndSettle();
+    await tester.pumpAndSettle(const Duration(seconds: 4));
 
     await tester.enterText(ft.find.byType(fm.TextField), watermarkText);
 
     await tester.testTextInput.receiveAction(ft.TextInputAction.done);
 
-    await tester.pumpAndSettle();
-
-    await Future.delayed(const Duration(seconds: 4));
+    await tester.pumpAndSettle(const Duration(seconds: 4));
 
     ft.expect(ft.find.text('processing image'), ft.findsNothing);
 
     ft.expect(ft.find.byType(fm.CustomPaint), ft.findsWidgets);
 
-    await Future.delayed(const Duration(seconds: 4));
+    await tester.pumpAndSettle(const Duration(seconds: 4));
 
     await binding.takeScreenshot('$platform.watermarking');
+
+    await tester.tap(ft.find.byIcon(fm.Icons.opacity));
+
+    await tester.pumpAndSettle(const Duration(seconds: 4));
+
+    await tester.drag(ft.find.byType(fm.Slider), const fm.Offset(-64, 0));
+
+    await tester.pumpAndSettle(const Duration(seconds: 4));
+
+    await tester.tap(ft.find.byIcon(fm.Icons.rotate_left));
+
+    await tester.pumpAndSettle(const Duration(seconds: 4));
+
+    await tester.drag(ft.find.byType(fm.Slider), const fm.Offset(-49, 0));
+
+    await tester.pumpAndSettle(const Duration(seconds: 4));
+
+    await binding.takeScreenshot('$platform.applied-some-effects');
 
     await tester.drag(
       ft.find.descendant(of: ft.find.byType(fm.ListView), matching: ft.find.byType(fm.ListView)),
       const fm.Offset(-6969, 0),
     );
 
-    await tester.pumpAndSettle();
+    await tester.pumpAndSettle(const Duration(seconds: 4));
 
     await tester.tap(ft.find.byIcon(fm.Icons.brightness_medium_outlined));
 
-    await tester.pumpAndSettle();
-
-    await Future.delayed(const Duration(seconds: 4));
-
-    await tester.pumpAndSettle();
+    await tester.pumpAndSettle(const Duration(seconds: 4));
 
     ft.expect(ft.find.text('processing image'), ft.findsNothing);
 
     await Future.delayed(const Duration(seconds: 4));
 
-    await tester.pumpAndSettle();
-
-    await Future.delayed(const Duration(seconds: 4));
+    await tester.pumpAndSettle(const Duration(seconds: 4));
 
     await binding.takeScreenshot('$platform.grayscale');
   });
