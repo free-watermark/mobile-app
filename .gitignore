@@ -51,6 +51,12 @@ free-watermark-fastlane-sa.json
 
 ios_simulator_id
 
+!android/fastlane/screenshots/.gitkeep
+android/fastlane/screenshots/*
+
+!android/fastlane/metadata/android/en-US/images/phoneScreenshots/.gitkeep
+android/fastlane/metadata/android/en-US/images/phoneScreenshots/*
+
 generated/screenshots/ios/*
 !generated/screenshots/ios/.gitkeep
 generated/screenshots/android/*
