@@ -7,6 +7,7 @@ import 'package:flutter/material.dart' as fm;
 import 'package:flutter/services.dart' as fts;
 import 'package:flutter_test/flutter_test.dart' as ft;
 import 'package:path_provider/path_provider.dart' as pd;
+import 'package:device_info_plus/device_info_plus.dart' as dip;
 import 'package:integration_test/integration_test.dart' as itgt;
 
 import 'package:free_watermark/app.dart' show App;
@@ -17,6 +18,10 @@ void main() {
     itgt.IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
   late final String platform;
+
+  late final dip.DeviceInfoPlugin deviceInfo;
+
+  late final String deviceModel;
 
   const watermarkText = 'web:register@web.com@20260609'; 
 
@@ -43,13 +48,19 @@ void main() {
 
     platform = io.Platform.isAndroid ? 'android' : 'ios';
 
+    deviceInfo = dip.DeviceInfoPlugin();
+
     if (platform == 'android') {
+      deviceModel = (await deviceInfo.androidInfo).model;
+
       await binding.convertFlutterSurfaceToImage();
+    } else {
+      deviceModel = (await deviceInfo.iosInfo).model!;
     }
 
     await tester.pumpAndSettle();
 
-    await binding.takeScreenshot('$platform.home');
+    await binding.takeScreenshot('$platform.0');
 
     await tester.tap(ft.find.text('Gallery'));
 
@@ -77,7 +88,7 @@ void main() {
 
     await tester.pumpAndSettle(const Duration(seconds: 4));
 
-    await binding.takeScreenshot('$platform.watermarking');
+    await binding.takeScreenshot('$platform.1');
 
     await tester.tap(ft.find.byIcon(fm.Icons.opacity));
 
@@ -95,7 +106,7 @@ void main() {
 
     await tester.pumpAndSettle(const Duration(seconds: 4));
 
-    await binding.takeScreenshot('$platform.applied-some-effects');
+    await binding.takeScreenshot('$platform.2');
 
     await tester.drag(
       ft.find.descendant(of: ft.find.byType(fm.ListView), matching: ft.find.byType(fm.ListView)),
@@ -112,9 +123,9 @@ void main() {
 
     await Future.delayed(const Duration(seconds: 4));
 
-    await tester.pumpAndSettle(const Duration(seconds: 4));
+    await tester.pumpAndSettle(const Duration(seconds: 8));
 
-    await binding.takeScreenshot('$platform.grayscale');
+    await binding.takeScreenshot('$platform.3');
   });
 }
 
