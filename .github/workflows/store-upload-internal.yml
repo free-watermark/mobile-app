@@ -88,7 +88,7 @@ jobs:
           flutter-version: ${{ env.FLUTTER_VERSION }}
       - name: get metadata from google play store
         run: |
-          bundle exec fastlane supply init
+          fastlane supply init
       - name: download android assets
         uses: actions/download-artifact@v3
         with:
@@ -117,7 +117,7 @@ jobs:
         run: |
           echo $ANDROID_API_SA_JSON_DATA | base64 -d > free-watermark-fastlane-sa.json
           chmod 0400 free-watermark-fastlane-sa.json
-          bundle exec fastlane deploy
+          fastlane deploy
           rm free-watermark-fastlane-sa.json
         env:
           ANDROID_API_SA_JSON_DATA: ${{ secrets.ANDROID_API_SA_JSON_DATA }}
