@@ -1,0 +1,125 @@
+name: apps deploy
+env:
+  JAVA_VERSION: 17
+  RUBY_VERSION: 3.2.1
+  FLUTTER_VERSION: 3.7.6
+on:
+  push:
+    branches:
+      - main
+jobs:
+  generate-screenshots-and-icons:
+    name: generate screenshots
+    runs-on: macos-12
+    environment: prod
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-java@v3
+        with:
+          distribution: temurin
+          java-version: $JAVA_VERSION
+      - name: install flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: $FLUTTER_VERSION
+      - name: get packages
+        run: flutter pub get
+      - name: generate icons
+        run: make icons
+      - name: run android emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 32
+          target: google_apis
+          arch: x86_64
+          profile: Pixel 4 XL
+          script: ./gradlew connectedCheck
+      - name: generate screnshots
+        run: make screenshots
+      - name: frame screenshots
+        run: |
+          mv generated/screenshots/android/* android/fastlane/screenshots/en-US/
+          cd android && fastlane frameit_now && rm -f 0.png 1.png 2.png 3.png
+      - name: upload android assets
+        uses: actions/upload-artifact@v3
+        with:
+          name: android-assets
+          path: android/app/src/main/res/
+      - name: upload ios assets
+        uses: actions/upload-artifact@v3
+        with:
+          name: ios-assets
+          path: ios/Runner/Assets.xcassets/
+      - name: upload android screenshots
+        uses: actions/upload-artifact@v3
+        with:
+          name: android-screenshots
+          path: android/fastlane/screenshots/en-US/
+      - name: upload ios screenshots
+        uses: actions/upload-artifact@v3
+        with:
+          name: ios-screenshots
+          path: generated/screenshots/ios/
+
+  upload-to-play-store-internal:
+    name: upload to playstore internal
+    runs-on: macos-12
+    needs: generate-screenshots-and-icons
+    environment: prod
+    env:
+      APP_ID: ${{ vars.APP_ID }}
+      APP_LABEL: ${{ vars.APP_LABEL }}
+      ANDROID_DEPLOY_TRACK: production
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-java@v3
+        with:
+          distribution: temurin
+          java-version: $JAVA_VERSION
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: $RUBY_VERSION
+          bundler-cache: true
+      - name: install fastlane
+        run: gem install fastlane
+      - name: install flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: $FLUTTER_VERSION
+      - name: get metadata from google play store
+        run: |
+          bundle exec fastlane supply init
+      - name: download android assets
+        uses: actions/download-artifact@v3
+        with:
+          name: android-assets
+          path: android/app/src/main/res/
+      - name: download android screenshots
+        uses: actions/download-artifact@v3
+        with:
+          name: android-screenshots
+          path: android/fastlane/metadata/android/en-US/images/phoneScreenshots/
+      - name: get packages
+        run: flutter pub get
+      - name: build aab
+        run: |
+          echo keyAlias=upload > android/key.properties
+          echo storeFile=./upload.jks >> android/key.properties
+          echo "keyPassword=$ANDROID_KEY_PASS" >> android/key.properties
+          echo "storePassword=$ANDROID_KEY_STORE_PASS" >> android/key.properties
+          chmod 0400 android/key.properties
+          flutter build appbundle --release 
+          rm android/key.properties
+        env:
+          ANDROID_KEY_PASS: ${{ secrets.ANDROID_KEY_PASS }}
+          ANDROID_KEY_STORE_PASS: ${{ secrets.ANDROID_KEY_STORE_PASS }}
+      - name: deploy to internal
+        run: |
+          echo $ANDROID_API_SA_JSON_DATA | base64 -d > free-watermark-fastlane-sa.json
+          chmod 0400 free-watermark-fastlane-sa.json
+          bundle exec fastlane deploy
+          rm free-watermark-fastlane-sa.json
+        env:
+          ANDROID_API_SA_JSON_DATA: ${{ secrets.ANDROID_API_SA_JSON_DATA }}
