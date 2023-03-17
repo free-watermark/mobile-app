@@ -1,0 +1,47 @@
+{
+  "device_frame_version": "latest",
+  "default": {
+    "padding": 64,
+    "frame": "WHITE",
+    "background": "./background.jpg",
+    "title": {
+      "color": "#ffffff"
+    },
+    "keyword": {
+      "color": "#f56300"
+    }
+  },
+  "data": [{
+    "filter": "0",
+    "keyword": {
+      "text": "CHOOSE"
+    },
+    "title": {
+      "text": "From many sources"
+    }
+  }, {
+    "filter": "1",
+    "keyword": {
+      "text": "ENTER"
+    },
+    "title": {
+      "text": "Watermarking text"
+    }
+  }, {
+    "filter": "2",
+    "keyword": {
+      "text": "TRANSFORM"
+    },
+    "title": {
+      "text": "Watermarking text"
+    }
+  }, {
+    "filter": "3",
+    "keyword": {
+      "text": "APPLIED"
+    },
+    "title": {
+      "text": "Filters to your image"
+    }
+  }]
+}
