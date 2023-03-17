@@ -18,10 +18,12 @@ Available to download from
 
 ---
 
-<img src="./sample-screenshots/0.png" width="256"/>
-<img src="./sample-screenshots/1.png" width="256"/>
-<img src="./sample-screenshots/2.png" width="256"/>
-<img src="./sample-screenshots/3.png" width="256"/>
+<p float="left">
+  <img src="./sample-screenshots/0.png" width="256"/>
+  <img src="./sample-screenshots/1.png" width="256"/>
+  <img src="./sample-screenshots/2.png" width="256"/>
+  <img src="./sample-screenshots/3.png" width="256"/>
+</p>
 
 ### Your sensitive images should be watermarked before sending to someone to protect against exploitation by unkind or immoral people.
 
