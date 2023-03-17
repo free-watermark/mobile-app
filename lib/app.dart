@@ -9,7 +9,7 @@ class App extends fm.StatelessWidget {
   @override
   fm.Widget build(fm.BuildContext context) {
     return const fm.MaterialApp(
-      title: 'FreeWatermark',
+      title: 'Watermarking',
       home: HomeScreen(),
     );
   }

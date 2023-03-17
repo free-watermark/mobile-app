@@ -57,7 +57,7 @@ android {
         targetSdkVersion flutter.targetSdkVersion
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
-        manifestPlaceholders.appLabel = System.getenv("APP_LABEL") ?: "FreeWatermark"
+        manifestPlaceholders.appLabel = System.getenv("APP_LABEL") ?: "Watermarking"
     }
 
     signingConfigs {
