@@ -70,7 +70,7 @@ jobs:
     env:
       APP_ID: ${{ vars.APP_ID }}
       APP_LABEL: ${{ vars.APP_LABEL }}
-      ANDROID_DEPLOY_TRACK: production
+      ANDROID_DEPLOY_TRACK: internal
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-java@v3
