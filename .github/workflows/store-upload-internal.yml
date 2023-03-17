@@ -17,12 +17,12 @@ jobs:
       - uses: actions/setup-java@v3
         with:
           distribution: temurin
-          java-version: $JAVA_VERSION
+          java-version: ${{ env.JAVA_VERSION }}
       - name: install flutter
         uses: subosito/flutter-action@v2
         with:
           channel: stable
-          flutter-version: $FLUTTER_VERSION
+          flutter-version: ${{ env.FLUTTER_VERSION }}
       - name: get packages
         run: flutter pub get
       - name: generate icons
@@ -76,10 +76,10 @@ jobs:
       - uses: actions/setup-java@v3
         with:
           distribution: temurin
-          java-version: $JAVA_VERSION
+          java-version: ${{ env.JAVA_VERSION }}
       - uses: ruby/setup-ruby@v1
         with:
-          ruby-version: $RUBY_VERSION
+          ruby-version: ${{ env.RUBY_VERSION }}
           bundler-cache: true
       - name: install fastlane
         run: gem install fastlane
@@ -87,7 +87,7 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: stable
-          flutter-version: $FLUTTER_VERSION
+          flutter-version: ${{ env.FLUTTER_VERSION }}
       - name: get metadata from google play store
         run: |
           bundle exec fastlane supply init
