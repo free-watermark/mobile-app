@@ -28,4 +28,12 @@ platform :android do
       aab: "../build/app/outputs/bundle/release/app-release.aab"
     )
   end
+
+  lane :frameit_now do
+    frameit(
+      use_platform: "ANDROID",
+      path: "./fastlane/screenshots",
+      force_device_type: ENV['FRAMEIT_DEVICE_TYPE'] || "Samsung Galaxy S9"
+    )
+  end
 end
