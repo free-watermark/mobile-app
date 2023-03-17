@@ -3,6 +3,8 @@
 
 # Watermarking
 
+![store-upload-internal](https://github.com/free-watermark/mobile-app/actions/workflows/store-upload-internal.yml/badge.svg)
+
 Free and easy watermarking tool for your sensitive images
 
 Available to download from
