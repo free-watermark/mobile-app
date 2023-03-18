@@ -42,6 +42,7 @@ jobs:
         id: screenshots
         shell: bash
         run: |
+          echo "count=${{ steps.check-exists.outputs.exists }}"
           echo "count=${{ steps.check-exists.outputs.exists }}" >> "$GITHUB_OUTPUT"
 
   generate-screenshots-and-icons:
