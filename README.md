@@ -3,7 +3,10 @@
 
 # Watermarking
 
-![store-upload-internal](https://github.com/free-watermark/mobile-app/actions/workflows/store-upload-internal.yml/badge.svg)
+<p float="left">
+  <img src="https://github.com/free-watermark/mobile-app/actions/workflows/build-release.yml/badge.svg"/>
+  <img src="https://github.com/free-watermark/mobile-app/actions/workflows/store-upload-internal.yml/badge.svg"/>
+</p>
 
 Free and easy watermarking tool for your sensitive images
 
