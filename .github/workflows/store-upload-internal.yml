@@ -98,6 +98,6 @@ jobs:
       - name: create release
         uses: softprops/action-gh-release@v1
         with:
-          name: "v${{ needs.get-tagged.outputs.version }}"
+          tag_name: "v${{ needs.get-tagged.outputs.version }}"
           files: |
             build/app/outputs/flutter-apk/
