@@ -112,12 +112,15 @@ jobs:
           echo "keyPassword=$ANDROID_KEY_PASS" >> android/key.properties
           echo "storePassword=$ANDROID_KEY_STORE_PASS" >> android/key.properties
           chmod 0400 android/key.properties
+          echo $KEY_STORE_DATA | base64 -d > android/app/upload.jks
+          chmod 0400 android/app/upload.jks
           flutter build appbundle --release 
-          rm android/key.properties
+          rm -f android/key.properties android/app/upload.jks
         env:
+          KEY_STORE_DATA: ${{ secrets.KEY_STORE_DATA }}
           ANDROID_KEY_PASS: ${{ secrets.ANDROID_KEY_PASS }}
           ANDROID_KEY_STORE_PASS: ${{ secrets.ANDROID_KEY_STORE_PASS }}
       - name: deploy to internal
         run: |
           cd android && fastlane deploy
-          rm free-watermark-fastlane-sa.json
+          rm -f free-watermark-fastlane-sa.json
