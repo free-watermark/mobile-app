@@ -89,7 +89,7 @@ jobs:
         if: ${{ needs.check-screenshots-and-icons.outputs.screenshots-count == 'false' }}
         run: |
           mv generated/screenshots/android/* android/fastlane/screenshots/en-US/
-          cd android && fastlane frameit_now && rm -f $(ls fastlane/screenshots/en-US/ | grep -v -e '.*_framed.png')
+          cd android && fastlane frameit_now && rm -f $(ls -d fastlane/screenshots/en-US/* | grep -v -e '.*_framed.png')
       - name: upload android assets
         uses: actions/upload-artifact@v3
         with:
