@@ -71,7 +71,7 @@ jobs:
           path: android/fastlane/metadata/android/en-US/images/phoneScreenshots/
       - name: ensure dir exists
         run: |
-          mkdir -p build/app/outputs/bundle/release build/app/outputs/flutter-apk/release
+          mkdir -p build/app/outputs/bundle/release build/app/outputs/flutter-apk/
       - name: download android aab
         uses: dawidd6/action-download-artifact@v2
         with:
@@ -89,7 +89,7 @@ jobs:
           event: push
           branch: main
           name: release-apk-${{ needs.get-tagged.outputs.version }}
-          path: build/app/outputs/flutter-apk/release/
+          path: build/app/outputs/flutter-apk/
       - name: deploy to internal
         run: |
           cd android && fastlane deploy
@@ -99,4 +99,4 @@ jobs:
         with:
           name: "v${{ needs.get-tagged.outputs.version }}"
           files: |
-            build/app/outputs/flutter-apk/release/*.apk
+            build/app/outputs/flutter-apk/
