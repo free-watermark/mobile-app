@@ -6,8 +6,8 @@ env:
   FLUTTER_VERSION: 3.7.6
 on:
   push:
-    tags:
-      - v*
+    branches:
+      - main
 jobs:
   check-tagged:
     name: checks tagged
