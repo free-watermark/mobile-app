@@ -70,7 +70,7 @@ jobs:
         run: make icons
       - name: generate screenshots
         uses: reactivecircus/android-emulator-runner@v2
-        if: ${{ needs.check-screenshots-and-icons.outputs.screenshots-count == '0' }}
+        if: ${{ needs.check-screenshots-and-icons.outputs.screenshots-count == 'false' }}
         with:
           api-level: 32
           target: google_apis
@@ -78,7 +78,7 @@ jobs:
           profile: pixel_5
           script: make screenshots
       - name: frame screenshots
-        if: ${{ needs.check-screenshots-and-icons.outputs.screenshots-count == '0' }}
+        if: ${{ needs.check-screenshots-and-icons.outputs.screenshots-count == 'false' }}
         run: |
           mv generated/screenshots/android/* android/fastlane/screenshots/en-US/
           cd android && fastlane frameit_now && rm -f $(ls fastlane/screenshots/en-US/ | grep -v -e '.*_framed.png')
@@ -93,13 +93,13 @@ jobs:
           name: ios-assets-${{ needs.check-tagged.outputs.version }}
           path: ios/Runner/Assets.xcassets/
       - name: upload android screenshots
-        if: ${{ needs.check-screenshots-and-icons.outputs.screenshots-count == '0' }}
+        if: ${{ needs.check-screenshots-and-icons.outputs.screenshots-count == 'false' }}
         uses: actions/upload-artifact@v3
         with:
           name: android-screenshots-${{ needs.check-tagged.outputs.version }}
           path: android/fastlane/screenshots/en-US/
       - name: upload ios screenshots
-        if: ${{ needs.check-screenshots-and-icons.outputs.screenshots-count == '0' }}
+        if: ${{ needs.check-screenshots-and-icons.outputs.screenshots-count == 'false' }}
         uses: actions/upload-artifact@v3
         with:
           name: ios-screenshots-${{ needs.check-tagged.outputs.version }}
