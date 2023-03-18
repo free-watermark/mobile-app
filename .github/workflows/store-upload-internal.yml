@@ -30,7 +30,7 @@ jobs:
     name: upload to playstore internal
     runs-on: macos-12
     needs: get-tagged
-    if: ${{ github.event.workflow_run.conclusion == 'success' && needs.check-tagged.outputs.tagged == '1' }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' && needs.get-tagged.outputs.tagged == '1' }}
     environment: prod
     env:
       APP_ID: ${{ vars.APP_ID }}
@@ -67,7 +67,7 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           event: push
           branch: main
-          name: android-screenshots-${{ needs.check-tagged.outputs.version }}
+          name: android-screenshots-${{ needs.get-tagged.outputs.version }}
           path: android/fastlane/metadata/android/en-US/images/phoneScreenshots/
       - name: ensure dir exists
         run: |
@@ -79,7 +79,7 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           event: push
           branch: main
-          name: release-aab-${{ needs.check-tagged.outputs.version }}
+          name: release-aab-${{ needs.get-tagged.outputs.version }}
           path: build/app/outputs/bundle/release/
       - name: download android apk
         uses: dawidd6/action-download-artifact@v2
@@ -88,7 +88,7 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           event: push
           branch: main
-          name: release-apk-${{ needs.check-tagged.outputs.version }}
+          name: release-apk-${{ needs.get-tagged.outputs.version }}
           path: build/app/outputs/flutter-apk/release/
       - name: deploy to internal
         run: |
@@ -97,6 +97,6 @@ jobs:
       - name: create release
         uses: softprops/action-gh-release@v1
         with:
-          name: "v${{ needs.check-tagged.outputs.version }}"
+          name: "v${{ needs.get-tagged.outputs.version }}"
           files: |
             build/app/outputs/flutter-apk/release/*.apk
