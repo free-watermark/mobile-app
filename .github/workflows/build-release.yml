@@ -42,8 +42,6 @@ jobs:
         id: screenshots
         shell: bash
         run: |
-          mkdir -p screenshots-artifact/
-          echo abc > screenshots-artifact/fake_framed.png
           echo "count=${{ steps.check-exists.outputs.exists }}" >> "$GITHUB_OUTPUT"
 
   generate-screenshots-and-icons:
