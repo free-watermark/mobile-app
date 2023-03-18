@@ -34,16 +34,23 @@ jobs:
       screenshots-count: ${{ steps.screenshots.outputs.count }}
     steps:
       - uses: actions/checkout@v2
-      - uses: xSAVIKx/artifact-exists-action@v0
+      - name: download android screenshots
+        uses: dawidd6/action-download-artifact@v2
         id: check-exists
         with:
+          workflow: build-release.yml
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          event: push
+          branch: main
           name: android-screenshots-${{ needs.check-tagged.outputs.version }}
+          path: android/fastlane/metadata/android/en-US/images/phoneScreenshots/
+          if_no_artifact_found: ignore
       - name: get screenshots count
         id: screenshots
         shell: bash
         run: |
-          echo "count=${{ steps.check-exists.outputs.exists }}"
-          echo "count=${{ steps.check-exists.outputs.exists }}" >> "$GITHUB_OUTPUT"
+          echo "count=${{ steps.check-exists.outputs.found_artifact }}"
+          echo "count=${{ steps.check-exists.outputs.found_artifact }}" >> "$GITHUB_OUTPUT"
 
   generate-screenshots-and-icons:
     name: generate screenshots
