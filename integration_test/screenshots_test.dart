@@ -123,7 +123,11 @@ void main() {
 
     await Future.delayed(const Duration(seconds: 4));
 
-    await tester.pumpAndSettle(const Duration(seconds: 8));
+    await tester.pumpAndSettle(const Duration(seconds: 4));
+
+    await Future.delayed(const Duration(seconds: 4));
+
+    await tester.pumpAndSettle(const Duration(seconds: 4));
 
     await binding.takeScreenshot('$platform.3');
   });
