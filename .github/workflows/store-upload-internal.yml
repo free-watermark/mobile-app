@@ -18,7 +18,7 @@ jobs:
       tagged: ${{ steps.gettag.outputs.tagged }}
       version: ${{ steps.gettag.outputs.version }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: get tag
         id: gettag
         shell: bash
@@ -37,7 +37,7 @@ jobs:
       APP_LABEL: ${{ vars.APP_LABEL }}
       ANDROID_DEPLOY_TRACK: internal
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: actions/setup-java@v3
         with:
           distribution: temurin
@@ -100,4 +100,4 @@ jobs:
         with:
           tag_name: "v${{ needs.get-tagged.outputs.version }}"
           files: |
-            build/app/outputs/flutter-apk/
+            build/app/outputs/flutter-apk/*.apk
