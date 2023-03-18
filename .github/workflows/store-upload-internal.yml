@@ -67,6 +67,7 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           event: push
           branch: main
+          search_artifacts: true
           name: android-screenshots-${{ needs.get-tagged.outputs.version }}
           path: android/fastlane/metadata/android/en-US/images/phoneScreenshots/
       - name: ensure dir exists

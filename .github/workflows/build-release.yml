@@ -44,6 +44,7 @@ jobs:
           branch: main
           name: android-screenshots-${{ needs.check-tagged.outputs.version }}
           path: android/fastlane/metadata/android/en-US/images/phoneScreenshots/
+          search_artifacts: true
           if_no_artifact_found: ignore
       - name: get screenshots count
         id: screenshots
