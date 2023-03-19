@@ -9,27 +9,32 @@ on:
     branches:
       - main
 jobs:
-  check-tagged:
+  get-tagged:
     name: checks tagged
     runs-on: macos-12
     environment: prod
     outputs:
       tagged: ${{ steps.gettag.outputs.tagged }}
       version: ${{ steps.gettag.outputs.version }}
+      version-code: ${{ steps.gettag.outputs.version-code }}
+      last-version-code: ${{ steps.gettag.outputs.last-version-code }}
     steps:
       - uses: actions/checkout@v3
       - name: get tag
         id: gettag
         shell: bash
         run: |
+          echo "last-version-code=$(git describe --tags --abbrev=0)" >> "$GITHUB_OUTPUT"
           echo "version=$(cat pubspec.yaml | grep version: | sed 's#version: ##' | tr -d '\n')" >> "$GITHUB_OUTPUT"
+          echo "version-code=$(cat pubspec.yaml | grep version: | sed 's#version: .*+##' | tr -d '\n')" >> "$GITHUB_OUTPUT"
           git show-ref --tags --verify --quiet -- "refs/tags/v$(cat pubspec.yaml | grep version: | sed 's#version: ##' | tr -d '\n')" && echo 'tagged=0' >> "$GITHUB_OUTPUT" || echo 'tagged=1' >> "$GITHUB_OUTPUT"
 
   check-screenshots-and-icons:
     name: checks screenshots and icons
     runs-on: macos-12
     environment: prod
-    needs: check-tagged
+    needs: get-tagged
+    if: ${{ needs.get-tagged.outputs.version-code > needs.get-tagged.outputs.last-version-code }}
     outputs:
       screenshots-count: ${{ steps.screenshots.outputs.count }}
     steps:
@@ -42,7 +47,7 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           event: push
           branch: main
-          name: android-screenshots-${{ needs.check-tagged.outputs.version }}
+          name: android-screenshots-${{ needs.get-tagged.outputs.version }}
           path: android/fastlane/metadata/android/en-US/images/phoneScreenshots/
           search_artifacts: true
           if_no_artifact_found: ignore
@@ -58,9 +63,9 @@ jobs:
     runs-on: macos-12
     environment: prod
     needs:
-      - check-tagged
+      - get-tagged
       - check-screenshots-and-icons
-    if: ${{ needs.check-tagged.outputs.tagged == '1' }}
+    if: ${{ needs.get-tagged.outputs.version-code > needs.get-tagged.outputs.last-version-code && needs.get-tagged.outputs.tagged == '1' }}
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-java@v3
@@ -93,32 +98,32 @@ jobs:
       - name: upload android assets
         uses: actions/upload-artifact@v3
         with:
-          name: android-assets-${{ needs.check-tagged.outputs.version }}
+          name: android-assets-${{ needs.get-tagged.outputs.version }}
           path: android/app/src/main/res/
       - name: upload ios assets
         uses: actions/upload-artifact@v3
         with:
-          name: ios-assets-${{ needs.check-tagged.outputs.version }}
+          name: ios-assets-${{ needs.get-tagged.outputs.version }}
           path: ios/Runner/Assets.xcassets/
       - name: upload android screenshots
         if: ${{ needs.check-screenshots-and-icons.outputs.screenshots-count == 'false' }}
         uses: actions/upload-artifact@v3
         with:
-          name: android-screenshots-${{ needs.check-tagged.outputs.version }}
+          name: android-screenshots-${{ needs.get-tagged.outputs.version }}
           path: android/fastlane/screenshots/en-US/
       - name: upload ios screenshots
         if: ${{ needs.check-screenshots-and-icons.outputs.screenshots-count == 'false' }}
         uses: actions/upload-artifact@v3
         with:
-          name: ios-screenshots-${{ needs.check-tagged.outputs.version }}
+          name: ios-screenshots-${{ needs.get-tagged.outputs.version }}
           path: generated/screenshots/ios/
 
   build-app:
     name: build apps
     runs-on: macos-12
-    if: ${{ needs.check-tagged.outputs.tagged == '1' }}
+    if: ${{ needs.get-tagged.outputs.version-code > needs.get-tagged.outputs.last-version-code && needs.get-tagged.outputs.tagged == '1' }}
     needs:
-      - check-tagged
+      - get-tagged
       - generate-screenshots-and-icons
     environment: prod
     env:
@@ -142,7 +147,7 @@ jobs:
       - name: download android assets
         uses: actions/download-artifact@v3
         with:
-          name: android-assets-${{ needs.check-tagged.outputs.version }}
+          name: android-assets-${{ needs.get-tagged.outputs.version }}
           path: android/app/src/main/res/
       - name: get packages
         run: flutter pub get
@@ -165,10 +170,10 @@ jobs:
       - name: upload release aab
         uses: actions/upload-artifact@v3
         with:
-          name: release-aab-${{ needs.check-tagged.outputs.version }}
+          name: release-aab-${{ needs.get-tagged.outputs.version }}
           path: build/app/outputs/bundle/release/
       - name: upload release apk
         uses: actions/upload-artifact@v3
         with:
-          name: release-apk-${{ needs.check-tagged.outputs.version }}
+          name: release-apk-${{ needs.get-tagged.outputs.version }}
           path: build/app/outputs/flutter-apk/*.apk 

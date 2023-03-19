@@ -17,13 +17,17 @@ jobs:
     outputs:
       tagged: ${{ steps.gettag.outputs.tagged }}
       version: ${{ steps.gettag.outputs.version }}
+      version-code: ${{ steps.gettag.outputs.version-code }}
+      last-version-code: ${{ steps.gettag.outputs.last-version-code }}
     steps:
       - uses: actions/checkout@v3
       - name: get tag
         id: gettag
         shell: bash
         run: |
+          echo "last-version-code=$(git describe --tags --abbrev=0)" >> "$GITHUB_OUTPUT"
           echo "version=$(cat pubspec.yaml | grep version: | sed 's#version: ##' | tr -d '\n')" >> "$GITHUB_OUTPUT"
+          echo "version-code=$(cat pubspec.yaml | grep version: | sed 's#version: .*+##' | tr -d '\n')" >> "$GITHUB_OUTPUT"
           git show-ref --tags --verify --quiet -- "refs/tags/v$(cat pubspec.yaml | grep version: | sed 's#version: ##' | tr -d '\n')" && echo 'tagged=0' >> "$GITHUB_OUTPUT" || echo 'tagged=1' >> "$GITHUB_OUTPUT"
 
   upload-to-play-store-internal:
@@ -32,7 +36,7 @@ jobs:
     permissions:
       contents: write
     needs: get-tagged
-    if: ${{ github.event.workflow_run.conclusion == 'success' && needs.get-tagged.outputs.tagged == '1' }}
+    if: ${{ needs.get-tagged.outputs.version-code > needs.get-tagged.outputs.last-version-code && github.event.workflow_run.conclusion == 'success' && needs.get-tagged.outputs.tagged == '1' }}
     environment: prod
     env:
       APP_ID: ${{ vars.APP_ID }}
