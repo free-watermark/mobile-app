@@ -83,7 +83,7 @@ jobs:
           api-level: 32
           target: google_apis
           arch: x86_64
-          profile: pixel_5
+          profile: pixel_4_xl
           script: make screenshots
       - name: frame screenshots
         if: ${{ needs.check-screenshots-and-icons.outputs.screenshots-count == 'false' }}
