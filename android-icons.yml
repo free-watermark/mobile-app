@@ -1,0 +1,6 @@
+
+flutter_icons: 
+  android:
+    adaptive_icon_background: '#000000'
+  min_sdk_android: 16
+  image_path_android: assets/icons/android.png
