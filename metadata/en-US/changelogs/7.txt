@@ -1,0 +1,8 @@
+v1.1.4 - 🎉 initial release on fdroid
+
+features:
+  - picking images from many sources for convenient like photo library,camera,explorer and will support open from sharing soon
+  - adding watermark text and change opacity and zoom in
+  - grayscale image
+  - change quality before saving or sending to someone
+  - many more filter effects coming soon as well
