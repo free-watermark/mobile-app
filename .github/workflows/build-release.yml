@@ -18,23 +18,31 @@ jobs:
       version: ${{ steps.gettag.outputs.version }}
       version-code: ${{ steps.gettag.outputs.version-code }}
       last-version-code: ${{ steps.gettag.outputs.last-version-code }}
+      version-code-compare: ${{ steps.compvc.outputs.version_code_compare }}
     steps:
       - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
       - name: get tag
         id: gettag
         shell: bash
         run: |
-          echo "last-version-code=$(git describe --tags --abbrev=0)" >> "$GITHUB_OUTPUT"
+          echo "last-version-code=$(git describe --tags --abbrev=0 | sed 's#.*+##' | tr -d '\n')" >> "$GITHUB_OUTPUT"
           echo "version=$(cat pubspec.yaml | grep version: | sed 's#version: ##' | tr -d '\n')" >> "$GITHUB_OUTPUT"
           echo "version-code=$(cat pubspec.yaml | grep version: | sed 's#version: .*+##' | tr -d '\n')" >> "$GITHUB_OUTPUT"
           git show-ref --tags --verify --quiet -- "refs/tags/v$(cat pubspec.yaml | grep version: | sed 's#version: ##' | tr -d '\n')" && echo 'tagged=0' >> "$GITHUB_OUTPUT" || echo 'tagged=1' >> "$GITHUB_OUTPUT"
+      - name: compare version code
+        id: compvc
+        shell: bash
+        run: |
+          echo "version_code_compare=$(bc <<< '${{ steps.gettag.outputs.version-code }} > ${{ steps.gettag.outputs.last-version-code }}')" >> "$GITHUB_OUTPUT"
 
   check-screenshots-and-icons:
     name: checks screenshots and icons
     runs-on: macos-12
     environment: prod
     needs: get-tagged
-    if: ${{ needs.get-tagged.outputs.version-code > needs.get-tagged.outputs.last-version-code }}
+    if: ${{ needs.get-tagged.outputs.version-code-compare == 1 }}
     outputs:
       screenshots-count: ${{ steps.screenshots.outputs.count }}
     steps:
@@ -65,7 +73,7 @@ jobs:
     needs:
       - get-tagged
       - check-screenshots-and-icons
-    if: ${{ needs.get-tagged.outputs.version-code > needs.get-tagged.outputs.last-version-code && needs.get-tagged.outputs.tagged == '1' }}
+    if: ${{ needs.get-tagged.outputs.version-code-compare == 1 && needs.get-tagged.outputs.tagged == '1' }}
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-java@v3
@@ -121,7 +129,7 @@ jobs:
   build-app:
     name: build apps
     runs-on: macos-12
-    if: ${{ needs.get-tagged.outputs.version-code > needs.get-tagged.outputs.last-version-code && needs.get-tagged.outputs.tagged == '1' }}
+    if: ${{ needs.get-tagged.outputs.version-code-compare == 1 && needs.get-tagged.outputs.tagged == '1' }}
     needs:
       - get-tagged
       - generate-screenshots-and-icons
