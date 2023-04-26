@@ -4,6 +4,7 @@ env:
   JAVA_VERSION: 17
   RUBY_VERSION: 3.2.1
   FLUTTER_VERSION: 3.7.6
+  BUILD_DIR: /tmp/build
 on:
   push:
     branches:
@@ -42,7 +43,6 @@ jobs:
     runs-on: macos-12
     environment: prod
     needs: get-tagged
-    if: ${{ needs.get-tagged.outputs.version-code-compare == 1 }}
     outputs:
       screenshots-count: ${{ steps.screenshots.outputs.count }}
     steps:
@@ -73,21 +73,25 @@ jobs:
     needs:
       - get-tagged
       - check-screenshots-and-icons
-    if: ${{ needs.get-tagged.outputs.version-code-compare == 1 && needs.get-tagged.outputs.tagged == '1' }}
     steps:
-      - uses: actions/checkout@v3
+      - name: clone repo
+        run: |
+          mkdir -p "$BUILD_DIR"
+          git clone --depth 1 --recurse-submodules "https://github.com/${{ github.repository }}.git" "$BUILD_DIR"
+          cd "$BUILD_DIR"
+          git checkout "${{ github.sha }}"
+          echo "$BUILD_DIR/submodules/flutter/bin" >> $GITHUB_PATH
       - uses: actions/setup-java@v3
         with:
           distribution: temurin
           java-version: ${{ env.JAVA_VERSION }}
-      - name: install flutter
-        uses: subosito/flutter-action@v2
-        with:
-          channel: stable
-          flutter-version: ${{ env.FLUTTER_VERSION }}
+      - name: setup android sdk
+        uses: android-actions/setup-android@v2
       - name: get packages
+        working-directory: ${{ env.BUILD_DIR }}
         run: flutter pub get
       - name: generate icons
+        working-directory: ${{ env.BUILD_DIR }}
         run: make icons
       - name: generate screenshots
         uses: reactivecircus/android-emulator-runner@v2
@@ -97,9 +101,10 @@ jobs:
           target: google_apis
           arch: x86_64
           profile: pixel_4_xl
-          script: make screenshots
+          script: cd ${{ env.BUILD_DIR }} && make screenshots
       - name: frame screenshots
         if: ${{ needs.check-screenshots-and-icons.outputs.screenshots-count == 'false' }}
+        working-directory: ${{ env.BUILD_DIR }}
         run: |
           mv generated/screenshots/android/* android/fastlane/screenshots/en-US/
           cd android && fastlane frameit_now && rm -f $(ls -d fastlane/screenshots/en-US/* | grep -v -e '.*_framed.png')
@@ -107,24 +112,24 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: android-assets-${{ needs.get-tagged.outputs.version }}
-          path: android/app/src/main/res/
+          path: ${{ env.BUILD_DIR }}/android/app/src/main/res/
       - name: upload ios assets
         uses: actions/upload-artifact@v3
         with:
           name: ios-assets-${{ needs.get-tagged.outputs.version }}
-          path: ios/Runner/Assets.xcassets/
+          path: ${{ env.BUILD_DIR }}/ios/Runner/Assets.xcassets/
       - name: upload android screenshots
         if: ${{ needs.check-screenshots-and-icons.outputs.screenshots-count == 'false' }}
         uses: actions/upload-artifact@v3
         with:
           name: android-screenshots-${{ needs.get-tagged.outputs.version }}
-          path: android/fastlane/screenshots/en-US/
+          path: ${{ env.BUILD_DIR }}/android/fastlane/screenshots/en-US/
       - name: upload ios screenshots
         if: ${{ needs.check-screenshots-and-icons.outputs.screenshots-count == 'false' }}
         uses: actions/upload-artifact@v3
         with:
           name: ios-screenshots-${{ needs.get-tagged.outputs.version }}
-          path: generated/screenshots/ios/
+          path: ${{ env.BUILD_DIR }}/generated/screenshots/ios/
 
   build-app:
     name: build apps
@@ -138,7 +143,13 @@ jobs:
       APP_ID: ${{ vars.APP_ID }}
       APP_LABEL: ${{ vars.APP_LABEL }}
     steps:
-      - uses: actions/checkout@v3
+      - name: clone repo
+        run: |
+          mkdir -p "$BUILD_DIR"
+          git clone --depth 1 --recurse-submodules "https://github.com/${{ github.repository }}.git" "$BUILD_DIR"
+          cd "$BUILD_DIR"
+          git checkout "${{ github.sha }}"
+          echo "$BUILD_DIR/submodules/flutter/bin" >> $GITHUB_PATH
       - uses: actions/setup-java@v3
         with:
           distribution: temurin
@@ -147,19 +158,18 @@ jobs:
         with:
           ruby-version: ${{ env.RUBY_VERSION }}
           bundler-cache: true
-      - name: install flutter
-        uses: subosito/flutter-action@v2
-        with:
-          channel: stable
-          flutter-version: ${{ env.FLUTTER_VERSION }}
+      - name: setup android sdk
+        uses: android-actions/setup-android@v2
       - name: download android assets
         uses: actions/download-artifact@v3
         with:
           name: android-assets-${{ needs.get-tagged.outputs.version }}
-          path: android/app/src/main/res/
+          path: ${{ env.BUILD_DIR }}/android/app/src/main/res/
       - name: get packages
+        working-directory: ${{ env.BUILD_DIR }}
         run: flutter pub get
       - name: build aab
+        working-directory: ${{ env.BUILD_DIR }}
         run: |
           echo keyAlias=upload > android/key.properties
           echo storeFile=./upload.jks >> android/key.properties
@@ -179,9 +189,9 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: release-aab-${{ needs.get-tagged.outputs.version }}
-          path: build/app/outputs/bundle/release/
+          path: ${{ env.BUILD_DIR }}/build/app/outputs/bundle/release/
       - name: upload release apk
         uses: actions/upload-artifact@v3
         with:
           name: release-apk-${{ needs.get-tagged.outputs.version }}
-          path: build/app/outputs/flutter-apk/*.apk 
+          path: ${{ env.BUILD_DIR }}/build/app/outputs/flutter-apk/*.apk 
