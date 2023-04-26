@@ -134,7 +134,6 @@ jobs:
   build-app:
     name: build apps
     runs-on: macos-12
-    if: ${{ needs.get-tagged.outputs.version-code-compare == 1 && needs.get-tagged.outputs.tagged == '1' }}
     needs:
       - get-tagged
       - generate-screenshots-and-icons
