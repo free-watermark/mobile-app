@@ -166,7 +166,10 @@ jobs:
           path: ${{ env.BUILD_DIR }}/android/app/src/main/res/
       - name: get packages
         working-directory: ${{ env.BUILD_DIR }}
-        run: flutter pub get
+        run: |
+          export PUB_CACHE=$(pwd)/.pub-cache
+          flutter config --no-analytics
+          flutter pub get
       - name: build aab
         working-directory: ${{ env.BUILD_DIR }}
         run: |
