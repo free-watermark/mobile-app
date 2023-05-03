@@ -90,9 +90,6 @@ jobs:
       - name: get packages
         working-directory: ${{ env.BUILD_DIR }}
         run: flutter pub get
-      - name: generate icons
-        working-directory: ${{ env.BUILD_DIR }}
-        run: make icons
       - name: generate screenshots
         uses: reactivecircus/android-emulator-runner@v2
         if: ${{ needs.check-screenshots-and-icons.outputs.screenshots-count == 'false' }}
@@ -108,16 +105,6 @@ jobs:
         run: |
           mv generated/screenshots/android/* android/fastlane/screenshots/en-US/
           cd android && fastlane frameit_now && rm -f $(ls -d fastlane/screenshots/en-US/* | grep -v -e '.*_framed.png')
-      - name: upload android assets
-        uses: actions/upload-artifact@v3
-        with:
-          name: android-assets-${{ needs.get-tagged.outputs.version }}
-          path: ${{ env.BUILD_DIR }}/android/app/src/main/res/
-      - name: upload ios assets
-        uses: actions/upload-artifact@v3
-        with:
-          name: ios-assets-${{ needs.get-tagged.outputs.version }}
-          path: ${{ env.BUILD_DIR }}/ios/Runner/Assets.xcassets/
       - name: upload android screenshots
         if: ${{ needs.check-screenshots-and-icons.outputs.screenshots-count == 'false' }}
         uses: actions/upload-artifact@v3
@@ -159,18 +146,13 @@ jobs:
           bundler-cache: true
       - name: setup android sdk
         uses: android-actions/setup-android@v2
-      - name: download android assets
-        uses: actions/download-artifact@v3
-        with:
-          name: android-assets-${{ needs.get-tagged.outputs.version }}
-          path: ${{ env.BUILD_DIR }}/android/app/src/main/res/
       - name: get packages
         working-directory: ${{ env.BUILD_DIR }}
         run: |
           export PUB_CACHE=$(pwd)/.pub-cache
           flutter config --no-analytics
           flutter pub get
-      - name: build aab
+      - name: build aab and apk
         working-directory: ${{ env.BUILD_DIR }}
         run: |
           echo keyAlias=upload > android/key.properties
@@ -180,6 +162,7 @@ jobs:
           chmod 0400 android/key.properties
           echo $KEY_STORE_DATA | base64 -d > android/app/upload.jks
           chmod 0400 android/app/upload.jks
+          flutter pub run flutter_launcher_icons -f android-icons.yml
           flutter build appbundle --release
           flutter build apk --release --split-per-abi
           rm -f android/key.properties android/app/upload.jks
