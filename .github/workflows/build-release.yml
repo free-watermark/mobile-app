@@ -4,7 +4,7 @@ env:
   JAVA_VERSION: 17
   RUBY_VERSION: 3.2.1
   FLUTTER_VERSION: 3.7.6
-  BUILD_DIR: /tmp/build
+  BUILD_DIR: /home/runnery/
 on:
   push:
     branches:
@@ -68,7 +68,7 @@ jobs:
 
   generate-screenshots-and-icons:
     name: generate screenshots
-    runs-on: macos-12
+    runs-on: ubuntu-22.04
     environment: prod
     needs:
       - get-tagged
@@ -118,9 +118,9 @@ jobs:
           name: ios-screenshots-${{ needs.get-tagged.outputs.version }}
           path: ${{ env.BUILD_DIR }}/generated/screenshots/ios/
 
-  build-app:
-    name: build apps
-    runs-on: macos-12
+  build-android-app:
+    name: build android app
+    runs-on: ubuntu-22.04
     needs:
       - get-tagged
       - generate-screenshots-and-icons
