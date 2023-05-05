@@ -4,7 +4,7 @@ env:
   JAVA_VERSION: 17
   RUBY_VERSION: 3.2.1
   FLUTTER_VERSION: 3.7.6
-  BUILD_DIR: /home/runnery/
+  BUILD_DIR: /home/runnery/app
 on:
   push:
     branches:
