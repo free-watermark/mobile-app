@@ -76,7 +76,9 @@ jobs:
     steps:
       - name: clone repo
         run: |
-          mkdir -p "$BUILD_DIR"
+          echo $(whoami)
+          sudo mkdir -p "$BUILD_DIR"
+          sudo chown $(whoami) "$BUILD_DIR"
           git clone --depth 1 --recurse-submodules "https://github.com/${{ github.repository }}.git" "$BUILD_DIR"
           cd "$BUILD_DIR"
           git checkout "${{ github.sha }}"
@@ -131,7 +133,9 @@ jobs:
     steps:
       - name: clone repo
         run: |
-          mkdir -p "$BUILD_DIR"
+          echo $(whoami)
+          sudo mkdir -p "$BUILD_DIR"
+          sudo chown $(whoami) "$BUILD_DIR"
           git clone --depth 1 --recurse-submodules "https://github.com/${{ github.repository }}.git" "$BUILD_DIR"
           cd "$BUILD_DIR"
           git checkout "${{ github.sha }}"
