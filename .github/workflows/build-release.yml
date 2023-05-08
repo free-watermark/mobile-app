@@ -79,9 +79,10 @@ jobs:
           echo $(whoami)
           sudo mkdir -p "$BUILD_DIR"
           sudo chown $(whoami) "$BUILD_DIR"
-          git clone --depth 1 --recurse-submodules "https://github.com/${{ github.repository }}.git" "$BUILD_DIR"
+          git clone "https://github.com/${{ github.repository }}.git" "$BUILD_DIR"
           cd "$BUILD_DIR"
           git checkout "${{ vars.BUILD_REF || github.sha }}"
+          git submodule update --init --recursive
           echo "$BUILD_DIR/submodules/flutter/bin" >> $GITHUB_PATH
       - uses: actions/setup-java@v3
         with:
@@ -91,7 +92,10 @@ jobs:
         uses: android-actions/setup-android@v2
       - name: get packages
         working-directory: ${{ env.BUILD_DIR }}
-        run: flutter pub get
+        run: |
+          export PUB_CACHE=$(pwd)/.pub-cache
+          flutter config --no-analytics
+          flutter pub get
       - name: generate screenshots
         uses: reactivecircus/android-emulator-runner@v2
         if: ${{ needs.check-screenshots-and-icons.outputs.screenshots-count == 'false' }}
@@ -136,9 +140,10 @@ jobs:
           echo $(whoami)
           sudo mkdir -p "$BUILD_DIR"
           sudo chown $(whoami) "$BUILD_DIR"
-          git clone --depth 1 --recurse-submodules "https://github.com/${{ github.repository }}.git" "$BUILD_DIR"
+          git clone "https://github.com/${{ github.repository }}.git" "$BUILD_DIR"
           cd "$BUILD_DIR"
           git checkout "${{ vars.BUILD_REF || github.sha }}"
+          git submodule update --init --recursive
           echo "$BUILD_DIR/submodules/flutter/bin" >> $GITHUB_PATH
       - uses: actions/setup-java@v3
         with:
