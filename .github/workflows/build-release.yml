@@ -172,8 +172,10 @@ jobs:
           echo $KEY_STORE_DATA | base64 -d > android/app/upload.jks
           chmod 0400 android/app/upload.jks
           flutter pub run flutter_launcher_icons -f android-icons.yml
+          flutter build apk --release --split-per-abi --target-platform=android-arm
+          flutter build apk --release --split-per-abi --target-platform=android-x64
+          flutter build apk --release --split-per-abi --target-platform=android-arm64
           flutter build appbundle --release
-          flutter build apk --release --split-per-abi
           rm -f android/key.properties android/app/upload.jks
         env:
           KEY_STORE_DATA: ${{ secrets.KEY_STORE_DATA }}
