@@ -81,7 +81,7 @@ jobs:
           sudo chown $(whoami) "$BUILD_DIR"
           git clone --depth 1 --recurse-submodules "https://github.com/${{ github.repository }}.git" "$BUILD_DIR"
           cd "$BUILD_DIR"
-          git checkout "${{ github.sha }}"
+          git checkout "${{ vars.BUILD_REF || github.sha }}"
           echo "$BUILD_DIR/submodules/flutter/bin" >> $GITHUB_PATH
       - uses: actions/setup-java@v3
         with:
@@ -138,7 +138,7 @@ jobs:
           sudo chown $(whoami) "$BUILD_DIR"
           git clone --depth 1 --recurse-submodules "https://github.com/${{ github.repository }}.git" "$BUILD_DIR"
           cd "$BUILD_DIR"
-          git checkout "${{ github.sha }}"
+          git checkout "${{ vars.BUILD_REF || github.sha }}"
           echo "$BUILD_DIR/submodules/flutter/bin" >> $GITHUB_PATH
       - uses: actions/setup-java@v3
         with:
