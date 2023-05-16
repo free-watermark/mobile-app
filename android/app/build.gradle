@@ -91,3 +91,16 @@ flutter {
 dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 }
+
+android.applicationVariants.all { variant ->
+    variant.outputs.each { output ->
+        def versionCodes = ["armeabi-v7a":1, "arm64-v8a":2, "x86":3, "x86_64":4]
+
+        def abiVersionCode = versionCodes.get(output.getFilter(com.android.build.OutputFile.ABI))
+
+        if (abiVersionCode != null) {
+            output.versionCodeOverride =
+                variant.versionCode * 1000 + abiVersionCode
+        }
+    }
+}
