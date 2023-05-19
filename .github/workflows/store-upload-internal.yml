@@ -4,11 +4,8 @@ env:
   RUBY_VERSION: 3.2.1
   FLUTTER_VERSION: 3.7.6
 on:
-  workflow_run:
-    types:
-      - completed
-    workflows:
-      - build-release
+  workflow_dispatch:
+
 jobs:
   get-tagged:
     name: get tagged
@@ -17,9 +14,6 @@ jobs:
     outputs:
       tagged: ${{ steps.gettag.outputs.tagged }}
       version: ${{ steps.gettag.outputs.version }}
-      version-code: ${{ steps.gettag.outputs.version-code }}
-      last-version-code: ${{ steps.gettag.outputs.last-version-code }}
-      version-code-compare: ${{ steps.compvc.outputs.version_code_compare }}
     steps:
       - uses: actions/checkout@v3
         with:
@@ -28,15 +22,8 @@ jobs:
         id: gettag
         shell: bash
         run: |
-          echo "last-version-code=$(git describe --tags --abbrev=0 | sed 's#.*+##' | tr -d '\n')" >> "$GITHUB_OUTPUT"
-          echo "version=$(cat pubspec.yaml | grep version: | sed 's#version: ##' | tr -d '\n')" >> "$GITHUB_OUTPUT"
-          echo "version-code=$(cat pubspec.yaml | grep version: | sed 's#version: .*+##' | tr -d '\n')" >> "$GITHUB_OUTPUT"
-          git show-ref --tags --verify --quiet -- "refs/tags/v$(cat pubspec.yaml | grep version: | sed 's#version: ##' | tr -d '\n')" && echo 'tagged=0' >> "$GITHUB_OUTPUT" || echo 'tagged=1' >> "$GITHUB_OUTPUT"
-      - name: compare version code
-        id: compvc
-        shell: bash
-        run: |
-          echo "version_code_compare=$(bc <<< '${{ steps.gettag.outputs.version-code }} > ${{ steps.gettag.outputs.last-version-code }}')" >> "$GITHUB_OUTPUT"
+          echo "version=$(cat pubspec.yaml | grep version: | sed 's#version: ##' | sed 's#\+.*##' | tr -d '\n')" >> "$GITHUB_OUTPUT"
+          git show-ref --tags --verify --quiet -- "refs/tags/v$(cat pubspec.yaml | grep version: | sed 's#version: ##' | sed 's#\+.*##' | tr -d '\n')" && echo 'tagged=0' >> "$GITHUB_OUTPUT" || echo 'tagged=1' >> "$GITHUB_OUTPUT"
 
   upload-to-play-store-internal:
     name: upload to playstore internal
@@ -44,7 +31,7 @@ jobs:
     permissions:
       contents: write
     needs: get-tagged
-    if: ${{ needs.get-tagged.outputs.version-code-compare == 1 && github.event.workflow_run.conclusion == 'success' && needs.get-tagged.outputs.tagged == '1' }}
+    if: ${{ needs.get-tagged.outputs.tagged == '1' }}
     environment: prod
     env:
       APP_ID: ${{ vars.APP_ID }}
