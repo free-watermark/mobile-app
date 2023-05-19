@@ -90,7 +90,7 @@ jobs:
         uses: reactivecircus/android-emulator-runner@v2
         if: ${{ needs.check-screenshots-and-icons.outputs.screenshots-count == 'false' }}
         env:
-          ANDROID_EMULATOR_WAIT_TIME_BEFORE_KILL: ${{ env.ANDROID_EMULATOR_WAIT_TIME_BEFORE_KILL }}
+          ANDROID_EMULATOR_WAIT_TIME_BEFORE_KILL: ${{ vars.ANDROID_EMULATOR_WAIT_TIME_BEFORE_KILL }}
         with:
           api-level: 32
           target: google_apis
