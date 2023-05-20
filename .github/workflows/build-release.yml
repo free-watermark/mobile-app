@@ -65,8 +65,8 @@ jobs:
       - check-screenshots-and-icons
     steps:
       - uses: actions/checkout@v3
-        with:
-          submodules: recursive
+      - name: fetch flutter submodule
+        run: git submodule update --init --recursive
       - uses: actions/setup-java@v3
         with:
           distribution: temurin
