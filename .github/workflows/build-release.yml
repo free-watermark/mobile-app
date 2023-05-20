@@ -65,12 +65,16 @@ jobs:
       - check-screenshots-and-icons
     steps:
       - uses: actions/checkout@v3
+        with:
+          submodules: recursive
       - uses: actions/setup-java@v3
         with:
           distribution: temurin
           java-version: ${{ env.JAVA_VERSION }}
       - name: setup android sdk
         uses: android-actions/setup-android@v2
+      - name: export flutter path
+        run: echo "$(pwd)/submodules/flutter/bin" >> $GITHUB_PATH
       - name: get packages
         run: |
           export PUB_CACHE=$(pwd)/.pub-cache
