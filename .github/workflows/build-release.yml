@@ -58,22 +58,13 @@ jobs:
 
   generate-screenshots-and-icons:
     name: generate screenshots
-    runs-on: ubuntu-22.04
+    runs-on: macos-12
     environment: prod
     needs:
       - get-tagged
       - check-screenshots-and-icons
     steps:
-      - name: clone repo
-        run: |
-          echo $(whoami)
-          sudo mkdir -p "$BUILD_DIR"
-          sudo chown $(whoami) "$BUILD_DIR"
-          git clone "https://github.com/${{ github.repository }}.git" "$BUILD_DIR"
-          cd "$BUILD_DIR"
-          git checkout "${{ vars.BUILD_REF || github.sha }}"
-          git submodule update --init --recursive
-          echo "$BUILD_DIR/submodules/flutter/bin" >> $GITHUB_PATH
+      - uses: actions/checkout@v3
       - uses: actions/setup-java@v3
         with:
           distribution: temurin
