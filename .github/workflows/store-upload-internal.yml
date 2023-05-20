@@ -4,7 +4,11 @@ env:
   RUBY_VERSION: 3.2.1
   FLUTTER_VERSION: 3.7.6
 on:
-  workflow_dispatch:
+  workflow_run:
+    types:
+      - completed
+    workflows:
+      - build-release
 
 jobs:
   get-tagged:
