@@ -72,7 +72,6 @@ jobs:
       - name: setup android sdk
         uses: android-actions/setup-android@v2
       - name: get packages
-        working-directory: ${{ env.BUILD_DIR }}
         run: |
           export PUB_CACHE=$(pwd)/.pub-cache
           flutter config --no-analytics
@@ -87,10 +86,9 @@ jobs:
           target: google_apis
           arch: x86_64
           profile: pixel_4_xl
-          script: cd ${{ env.BUILD_DIR }} && make screenshots
+          script: make screenshots
       - name: frame screenshots
         if: ${{ needs.check-screenshots-and-icons.outputs.screenshots-count == 'false' }}
-        working-directory: ${{ env.BUILD_DIR }}
         run: |
           mv generated/screenshots/android/* android/fastlane/screenshots/en-US/
           cd android && fastlane frameit_now && rm -f $(ls -d fastlane/screenshots/en-US/* | grep -v -e '.*_framed.png')
@@ -99,13 +97,13 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: android-screenshots-${{ needs.get-tagged.outputs.version }}
-          path: ${{ env.BUILD_DIR }}/android/fastlane/screenshots/en-US/
+          path: android/fastlane/screenshots/en-US/
       - name: upload ios screenshots
         if: ${{ needs.check-screenshots-and-icons.outputs.screenshots-count == 'false' }}
         uses: actions/upload-artifact@v3
         with:
           name: ios-screenshots-${{ needs.get-tagged.outputs.version }}
-          path: ${{ env.BUILD_DIR }}/generated/screenshots/ios/
+          path: generated/screenshots/ios/
 
   build-android-app:
     name: build android app
