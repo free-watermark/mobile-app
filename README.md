@@ -11,13 +11,19 @@
 Free and easy watermarking tool for your sensitive images
 
 Available to download from
-- [ ] F-Droid
+- [x] F-Droid
 - [x] Google Play Store
 - [ ] App Store
 
-<a href="https://play.google.com/store/apps/details?id=com.freewatermark.app" target="_blank">
-  <img src="https://img.shields.io/badge/Android-3DDC84?style=for-the-badge&logo=android&logoColor=white"/>
-</a>
+<p float="left">
+  <a href='https://play.google.com/store/apps/details?id=io.github.freewatermark.mobileapp&pcampaignid=pcampaignidMKT-Other-global-all-co-prtnr-py-PartBadge-Mar2515-1'><img alt='Get it on Google Play' src='https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png' height="80"/></a>
+
+  <a href="https://f-droid.org/packages/io.github.freewatermark.mobileapp">
+    <img src="https://fdroid.gitlab.io/artwork/badge/get-it-on.png"
+    alt="Get it on F-Droid"
+    height="80">
+  </a>
+</p>
 
 ---
 
