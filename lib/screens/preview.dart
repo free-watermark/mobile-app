@@ -1,4 +1,3 @@
-
 import 'dart:io' as io;
 import 'dart:ui' as ui;
 import 'dart:async' as asyncx;
@@ -16,20 +15,21 @@ import '../blocs/image_processing.dart';
 import '../widgets/watermark_paint.dart';
 
 class PreviewScreen extends fm.StatefulWidget {
-  const PreviewScreen({ super.key });
+  const PreviewScreen({super.key});
 
   @override
   fm.State<PreviewScreen> createState() => _PreviewScreenState();
 }
 
 class _PreviewScreenState extends fm.State<PreviewScreen> {
-  final fm.TextEditingController _watermarkingTextInputController = fm.TextEditingController();
+  final fm.TextEditingController _watermarkingTextInputController =
+      fm.TextEditingController();
 
   late final ImageProcessingBloc _imageProcessBloc;
 
   final fw.GlobalKey _imageKey = fw.GlobalKey();
 
-  asyncx.Timer? _watermarkingTextInputDebounce; 
+  asyncx.Timer? _watermarkingTextInputDebounce;
 
   late final asyncx.StreamSubscription _listenOnImageLoadFailure;
 
@@ -76,12 +76,12 @@ class _PreviewScreenState extends fm.State<PreviewScreen> {
           builder: (context) {
             popDialogContext = () => fc.Navigator.of(context).pop();
 
-            return fc.WillPopScope(
-              onWillPop: () => Future.value(false),
-              child: const fc.CupertinoAlertDialog(
-                title: fc.Text('exporting watermarked image'),
-                content: fc.CupertinoActivityIndicator(radius: 16),
-              ),
+            return const fc.PopScope(
+                canPop: false,
+                child: fc.CupertinoAlertDialog(
+                    title: fc.Text('exporting watermarked image'),
+                    content: fc.CupertinoActivityIndicator(radius: 16),
+                )
             );
           },
         );
@@ -91,15 +91,16 @@ class _PreviewScreenState extends fm.State<PreviewScreen> {
           builder: (context) {
             popDialogContext = () => fm.Navigator.of(context).pop();
 
-            return fm.WillPopScope(
-              onWillPop: () => Future.value(false),
+            return fm.PopScope(
+              canPop: false,
               child: fm.AlertDialog(
                 title: const fm.Text('exporting watermarked image'),
                 content: fm.Container(
                   width: 64,
                   height: 64,
                   alignment: fm.Alignment.center,
-                  child: const fm.CircularProgressIndicator(color: fm.Color(0xfff56300)),
+                  child: const fm.CircularProgressIndicator(
+                      color: fm.Color(0xfff56300)),
                 ),
               ),
             );
@@ -107,12 +108,17 @@ class _PreviewScreenState extends fm.State<PreviewScreen> {
         );
       }
 
-      final imageWidth = _imageProcessBloc.originalImageSize().width * _imageProcessBloc.finalProcessingSizeReductionTo() ~/ 100;
-      final imageHeight = _imageProcessBloc.originalImageSize().height * _imageProcessBloc.finalProcessingSizeReductionTo() ~/ 100;
+      final imageWidth = _imageProcessBloc.originalImageSize().width *
+          _imageProcessBloc.finalProcessingSizeReductionTo() ~/
+          100;
+      final imageHeight = _imageProcessBloc.originalImageSize().height *
+          _imageProcessBloc.finalProcessingSizeReductionTo() ~/
+          100;
 
-      img.Image imageToProcess = (await img.decodeImageFile(_imageProcessBloc.isToggleGrayscaled()
-          ? _imageProcessBloc.getGrayscaledImagePath()
-          : _imageProcessBloc.getOriginalImagePath()))!;
+      img.Image imageToProcess = (await img.decodeImageFile(
+          _imageProcessBloc.isToggleGrayscaled()
+              ? _imageProcessBloc.getGrayscaledImagePath()
+              : _imageProcessBloc.getOriginalImagePath()))!;
 
       if (_imageProcessBloc.finalProcessingSizeReductionTo() < 100) {
         imageToProcess = img.copyResize(
@@ -139,12 +145,12 @@ class _PreviewScreenState extends fm.State<PreviewScreen> {
         angle: _imageProcessBloc.angleValue(),
         opacity: _imageProcessBloc.opacityValue(),
         text: _imageProcessBloc.watermarkingTextValue(),
-      ); 
+      );
 
       final ui.Image processedUiImage = await recorder.endRecording().toImage(
-        imageWidth,
-        imageHeight,
-      );
+            imageWidth,
+            imageHeight,
+          );
 
       final img.Image processedImage = img.Image.fromBytes(
         numChannels: 4,
@@ -169,10 +175,13 @@ class _PreviewScreenState extends fm.State<PreviewScreen> {
     );
   }
 
-  fm.Widget _featureButton(fm.IconData icon, EditMode editMode, {fm.Widget? child, Function? func}) {
+  fm.Widget _featureButton(fm.IconData icon, EditMode editMode,
+      {fm.Widget? child, Function? func}) {
     return fm.GestureDetector(
       onTap: () {
-        if (_imageProcessBloc.isGrayscaling() || _imageProcessBloc.isLoadingImage() || _imageProcessBloc.isFinalProcessing()) {
+        if (_imageProcessBloc.isGrayscaling() ||
+            _imageProcessBloc.isLoadingImage() ||
+            _imageProcessBloc.isFinalProcessing()) {
           return;
         }
 
@@ -180,16 +189,17 @@ class _PreviewScreenState extends fm.State<PreviewScreen> {
       },
       child: fm.Padding(
         padding: const fm.EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        child: child ?? fm.Icon(
-          icon,
-          size: 32,
-          color: _imageProcessBloc.currentEditMode() == editMode
-            ? const fm.Color(0xfff56300)
-            : const fm.Color(0xffffffff),
-        ),
+        child: child ??
+            fm.Icon(
+              icon,
+              size: 32,
+              color: _imageProcessBloc.currentEditMode() == editMode
+                  ? const fm.Color(0xfff56300)
+                  : const fm.Color(0xffffffff),
+            ),
       ),
     );
-  }  
+  }
 
   fm.Widget _imagePreview() {
     return fm.Container(
@@ -199,27 +209,38 @@ class _PreviewScreenState extends fm.State<PreviewScreen> {
       decoration: const fm.BoxDecoration(
         color: fm.Color(0xff000000),
       ),
-
       child: fb.BlocBuilder<ImageProcessingBloc, ImageProcessingState>(
         bloc: _imageProcessBloc,
-        buildWhen: (_, curr) => curr is ImageLoaded || curr is ImageGrayscaling || curr is ImageGrayscaleToggled,
+        buildWhen: (_, curr) =>
+            curr is ImageLoaded ||
+            curr is ImageGrayscaling ||
+            curr is ImageGrayscaleToggled,
         builder: (context, state) {
           if (state is ImageLoaded || state is ImageGrayscaleToggled) {
             return fm.Stack(
               clipBehavior: fm.Clip.hardEdge,
               children: [
-                fm.Image.file(io.File(
-                  _imageProcessBloc.isToggleGrayscaled()
-                    ? _imageProcessBloc.getGrayscaledImagePath()
-                    : _imageProcessBloc.getOriginalImagePath(),
-                ), fit: fm.BoxFit.contain, key: _imageKey),
-
+                fm.Image.file(
+                    io.File(
+                      _imageProcessBloc.isToggleGrayscaled()
+                          ? _imageProcessBloc.getGrayscaledImagePath()
+                          : _imageProcessBloc.getOriginalImagePath(),
+                    ),
+                    fit: fm.BoxFit.contain,
+                    key: _imageKey),
                 fb.BlocBuilder<ImageProcessingBloc, ImageProcessingState>(
                   bloc: _imageProcessBloc,
-                  buildWhen: (_, curr) => curr is SetRenderedImageSizeDone || curr is OpacityChanged || curr is ZoomChanged || curr is AngleChanged || curr is WatermarkingTextChanged,
+                  buildWhen: (_, curr) =>
+                      curr is SetRenderedImageSizeDone ||
+                      curr is OpacityChanged ||
+                      curr is ZoomChanged ||
+                      curr is AngleChanged ||
+                      curr is WatermarkingTextChanged,
                   builder: (context, state) {
                     if (_imageProcessBloc.renderedImageSize() != null) {
-                      if (_imageProcessBloc.watermarkingTextValue().isNotEmpty) {
+                      if (_imageProcessBloc
+                          .watermarkingTextValue()
+                          .isNotEmpty) {
                         return fm.Container(
                           width: _imageProcessBloc.renderedImageSize()!.width,
                           height: _imageProcessBloc.renderedImageSize()!.height,
@@ -231,22 +252,29 @@ class _PreviewScreenState extends fm.State<PreviewScreen> {
                               angle: _imageProcessBloc.angleValue(),
                               opacity: _imageProcessBloc.opacityValue(),
                               text: _imageProcessBloc.watermarkingTextValue(),
-                              width: _imageProcessBloc.renderedImageSize()!.width,
-                              height: _imageProcessBloc.renderedImageSize()!.height,
-                              fontSize: _imageProcessBloc.renderedImageSize()!.width * 0.04,
+                              width:
+                                  _imageProcessBloc.renderedImageSize()!.width,
+                              height:
+                                  _imageProcessBloc.renderedImageSize()!.height,
+                              fontSize:
+                                  _imageProcessBloc.renderedImageSize()!.width *
+                                      0.04,
                             ),
                           ),
                         );
                       }
                     } else {
                       fm.WidgetsBinding.instance.addPostFrameCallback((_) {
-                        final fm.RenderBox? renderBox = _imageKey.currentContext?.findRenderObject() as fm.RenderBox?;
+                        final fm.RenderBox? renderBox = _imageKey.currentContext
+                            ?.findRenderObject() as fm.RenderBox?;
 
-                        if (renderBox?.size == null || renderBox!.size.width == 0) {
+                        if (renderBox?.size == null ||
+                            renderBox!.size.width == 0) {
                           return;
                         }
 
-                        _imageProcessBloc.add(SetRenderedImageSize(renderBox.size));
+                        _imageProcessBloc
+                            .add(SetRenderedImageSize(renderBox.size));
                       });
                     }
 
@@ -258,10 +286,8 @@ class _PreviewScreenState extends fm.State<PreviewScreen> {
           }
 
           return const fm.Center(
-            child: fm.Text(
-              'processing image',
-              style: fm.TextStyle(fontSize: 16, color: fm.Color(0xffffffff))
-            ),
+            child: fm.Text('processing image',
+                style: fm.TextStyle(fontSize: 16, color: fm.Color(0xffffffff))),
           );
         },
       ),
@@ -304,95 +330,108 @@ class _PreviewScreenState extends fm.State<PreviewScreen> {
                     _watermarkingTextInputDebounce!.cancel();
                   }
 
-                  _watermarkingTextInputDebounce = asyncx.Timer(const Duration(milliseconds: 640), () {
+                  _watermarkingTextInputDebounce =
+                      asyncx.Timer(const Duration(milliseconds: 640), () {
                     _imageProcessBloc.add(WatermarkingTextChange(val));
                   });
                 },
               ),
-          );
+            );
           case EditMode.zoom:
           case EditMode.angle:
           case EditMode.opacity:
           case EditMode.quality:
-          case EditMode.sizeReduction: {  
-            return fb.BlocBuilder<ImageProcessingBloc, ImageProcessingState>(
-              buildWhen: (_, curr) => curr is AngleChanged || curr is OpacityChanged || curr is ZoomChanged || curr is FinalProcessQualityChanged || curr is FinalProcessSizeReductionToChanged,
-              builder: (context, state) {
-                int? divisions;
-                double min = 0;
-                double max = 100;
-                double value = 0;
+          case EditMode.sizeReduction:
+            {
+              return fb.BlocBuilder<ImageProcessingBloc, ImageProcessingState>(
+                buildWhen: (_, curr) =>
+                    curr is AngleChanged ||
+                    curr is OpacityChanged ||
+                    curr is ZoomChanged ||
+                    curr is FinalProcessQualityChanged ||
+                    curr is FinalProcessSizeReductionToChanged,
+                builder: (context, state) {
+                  int? divisions;
+                  double min = 0;
+                  double max = 100;
+                  double value = 0;
 
-                Function(double)? updateVal;
+                  Function(double)? updateVal;
 
-                if (currentEditMode == EditMode.angle) {
-                  max = 360;
-                  divisions = 360;
-                  value = _imageProcessBloc.angleValue();
-                  updateVal = (newVal) => _imageProcessBloc.add(AngleChange(newVal));
-                }
+                  if (currentEditMode == EditMode.angle) {
+                    max = 360;
+                    divisions = 360;
+                    value = _imageProcessBloc.angleValue();
+                    updateVal =
+                        (newVal) => _imageProcessBloc.add(AngleChange(newVal));
+                  }
 
-                if (currentEditMode == EditMode.zoom) {
-                  min = -32;
-                  divisions = 132;
-                  value = _imageProcessBloc.zoomValue();
-                  updateVal = (newVal) => _imageProcessBloc.add(ZoomChange(newVal));
-                }
+                  if (currentEditMode == EditMode.zoom) {
+                    min = -32;
+                    divisions = 132;
+                    value = _imageProcessBloc.zoomValue();
+                    updateVal =
+                        (newVal) => _imageProcessBloc.add(ZoomChange(newVal));
+                  }
 
-                if (currentEditMode == EditMode.opacity) {
-                  divisions = 100;
-                  value = _imageProcessBloc.opacityValue();
-                  updateVal = (newVal) => _imageProcessBloc.add(OpacityChange(newVal));
-                }
+                  if (currentEditMode == EditMode.opacity) {
+                    divisions = 100;
+                    value = _imageProcessBloc.opacityValue();
+                    updateVal = (newVal) =>
+                        _imageProcessBloc.add(OpacityChange(newVal));
+                  }
 
-                if (currentEditMode == EditMode.quality) {
-                  value = _imageProcessBloc.finalProcessingQuality();
-                  divisions = 100;
-                  updateVal = (newVal) => _imageProcessBloc.add(SetFinalProcessQuality(newVal));
-                }
+                  if (currentEditMode == EditMode.quality) {
+                    value = _imageProcessBloc.finalProcessingQuality();
+                    divisions = 100;
+                    updateVal = (newVal) =>
+                        _imageProcessBloc.add(SetFinalProcessQuality(newVal));
+                  }
 
-                if (currentEditMode == EditMode.sizeReduction) {
-                  divisions = 100;
-                  value = _imageProcessBloc.finalProcessingSizeReductionTo();
-                  updateVal = (newVal) => _imageProcessBloc.add(SetFinalProcessSizeReductionTo(newVal));
-                }
+                  if (currentEditMode == EditMode.sizeReduction) {
+                    divisions = 100;
+                    value = _imageProcessBloc.finalProcessingSizeReductionTo();
+                    updateVal = (newVal) => _imageProcessBloc
+                        .add(SetFinalProcessSizeReductionTo(newVal));
+                  }
 
-                return fm.Row(
-                  mainAxisAlignment: fm.MainAxisAlignment.center,
-                  children: [
-                    fm.Text(
-                      min.toInt().toString(),
-                      style: const fm.TextStyle(fontSize: 16, color: fm.Color(0xfff56300)),
-                    ),
-
-                    fm.Expanded(
-                      child: fm.Slider(
-                        min: min,
-                        max: max,
-                        value: value,
-                        divisions: divisions,
-                        onChanged: updateVal,
-                        label: value.toInt().toString(),
-                        thumbColor: const fm.Color(0xfff56400),
-                        activeColor: const fm.Color(0xfff56400),
-                        inactiveColor: const fm.Color(0xffffffff),
-                        secondaryActiveColor: const fm.Color(0xffffffff),
+                  return fm.Row(
+                    mainAxisAlignment: fm.MainAxisAlignment.center,
+                    children: [
+                      fm.Text(
+                        min.toInt().toString(),
+                        style: const fm.TextStyle(
+                            fontSize: 16, color: fm.Color(0xfff56300)),
                       ),
-                    ),
+                      fm.Expanded(
+                        child: fm.Slider(
+                          min: min,
+                          max: max,
+                          value: value,
+                          divisions: divisions,
+                          onChanged: updateVal,
+                          label: value.toInt().toString(),
+                          thumbColor: const fm.Color(0xfff56400),
+                          activeColor: const fm.Color(0xfff56400),
+                          inactiveColor: const fm.Color(0xffffffff),
+                          secondaryActiveColor: const fm.Color(0xffffffff),
+                        ),
+                      ),
+                      fm.Text(
+                        max.toInt().toString(),
+                        style: const fm.TextStyle(
+                            fontSize: 16, color: fm.Color(0xfff56300)),
+                      ),
+                    ],
+                  );
+                },
+              );
+            }
 
-                    fm.Text(
-                      max.toInt().toString(),
-                      style: const fm.TextStyle(fontSize: 16, color: fm.Color(0xfff56300)),
-                    ),
-                  ],
-                ); 
-              },
-            ); 
-          }
-
-          default: {
-            return const fm.Material();
-          }
+          default:
+            {
+              return const fm.Material();
+            }
         }
       },
     );
@@ -402,8 +441,8 @@ class _PreviewScreenState extends fm.State<PreviewScreen> {
     return fm.SizedBox(
       height: 64,
       width: double.infinity,
-      child: fm.Center(child:
-        fm.ListView(
+      child: fm.Center(
+        child: fm.ListView(
           shrinkWrap: true,
           scrollDirection: fm.Axis.horizontal,
           children: [
@@ -414,21 +453,16 @@ class _PreviewScreenState extends fm.State<PreviewScreen> {
                 return fm.Row(
                   children: [
                     _featureButton(fm.Icons.font_download, EditMode.text),
-
                     _featureButton(fm.Icons.opacity, EditMode.opacity),
-
                     _featureButton(fm.Icons.rotate_left, EditMode.angle),
-
                     _featureButton(fm.Icons.zoom_in_map_rounded, EditMode.zoom),
-
                     _featureButton(fm.Icons.high_quality, EditMode.quality),
-
-                    _featureButton(fm.Icons.photo_size_select_large_sharp, EditMode.sizeReduction),
+                    _featureButton(fm.Icons.photo_size_select_large_sharp,
+                        EditMode.sizeReduction),
                   ],
                 );
               },
             ),
-
             _featureButton(
               fm.Icons.brightness_medium_outlined,
               EditMode.none,
@@ -442,19 +476,19 @@ class _PreviewScreenState extends fm.State<PreviewScreen> {
 
                 imageProcess.add(ImageGrayscale());
               },
-              child: fb.BlocSelector<ImageProcessingBloc, ImageProcessingState, bool>(
-                bloc: _imageProcessBloc,
-                selector: (_) => _imageProcessBloc.isToggleGrayscaled(),
-                builder: (context, state) {
-                  return fm.Icon(
-                    fm.Icons.brightness_medium_outlined,
-                    size: 32,
-                    color: _imageProcessBloc.isToggleGrayscaled()
-                      ? const fm.Color(0xfff56300)
-                      : const fm.Color(0xffffffff),
-                  );
-                }
-              ),
+              child: fb.BlocSelector<ImageProcessingBloc, ImageProcessingState,
+                      bool>(
+                  bloc: _imageProcessBloc,
+                  selector: (_) => _imageProcessBloc.isToggleGrayscaled(),
+                  builder: (context, state) {
+                    return fm.Icon(
+                      fm.Icons.brightness_medium_outlined,
+                      size: 32,
+                      color: _imageProcessBloc.isToggleGrayscaled()
+                          ? const fm.Color(0xfff56300)
+                          : const fm.Color(0xffffffff),
+                    );
+                  }),
             ),
           ],
         ),
@@ -470,17 +504,21 @@ class _PreviewScreenState extends fm.State<PreviewScreen> {
         actions: [
           fb.BlocBuilder<ImageProcessingBloc, ImageProcessingState>(
             bloc: _imageProcessBloc,
-            buildWhen: (_, curr) => curr is DoingFinalProcessing || curr is FinalProcessed,
+            buildWhen: (_, curr) =>
+                curr is DoingFinalProcessing || curr is FinalProcessed,
             builder: (context, _) {
               return fm.TextButton(
-                onPressed: _imageProcessBloc.isFinalProcessing() ? null : _exportImagePreview,
-                child: fm.Row(
-                  children: const [
-                    fm.Text('Done', style: fm.TextStyle(fontSize: 16, color: fm.Color(0xffffffff))),
-
+                onPressed: _imageProcessBloc.isFinalProcessing()
+                    ? null
+                    : _exportImagePreview,
+                child: const fm.Row(
+                  children: [
+                    fm.Text('Done',
+                        style: fm.TextStyle(
+                            fontSize: 16, color: fm.Color(0xffffffff))),
                     fm.SizedBox(width: 4),
-
-                    fm.Icon(fm.Icons.done, size: 26, color: fm.Color(0xffffffff)),
+                    fm.Icon(fm.Icons.done,
+                        size: 26, color: fm.Color(0xffffffff)),
                   ],
                 ),
               );
@@ -492,17 +530,11 @@ class _PreviewScreenState extends fm.State<PreviewScreen> {
       body: fm.ListView(
         children: [
           _imagePreview(),
-
           const fm.SizedBox(height: 16),
-
           const fm.Divider(height: 8, color: fm.Color(0xffffffff)),
-
           const fm.SizedBox(height: 16),
-
           _effectEditControl(),
-
           const fm.SizedBox(height: 16),
-
           _effectEditModes(),
         ],
       ),
