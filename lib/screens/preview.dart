@@ -79,10 +79,9 @@ class _PreviewScreenState extends fm.State<PreviewScreen> {
             return const fc.PopScope(
                 canPop: false,
                 child: fc.CupertinoAlertDialog(
-                    title: fc.Text('exporting watermarked image'),
-                    content: fc.CupertinoActivityIndicator(radius: 16),
-                )
-            );
+                  title: fc.Text('exporting watermarked image'),
+                  content: fc.CupertinoActivityIndicator(radius: 16),
+                ));
           },
         );
       } else {
@@ -358,12 +357,20 @@ class _PreviewScreenState extends fm.State<PreviewScreen> {
 
                   Function(double)? updateVal;
 
+                  late String leftIndicatorText;
+                  late String rightIndicatorText;
+                  late String middleIndicatorText;
+
                   if (currentEditMode == EditMode.angle) {
                     max = 360;
                     divisions = 360;
                     value = _imageProcessBloc.angleValue();
                     updateVal =
                         (newVal) => _imageProcessBloc.add(AngleChange(newVal));
+
+                    leftIndicatorText = "Rotate Left";
+                    rightIndicatorText = "Rotate Right";
+                    middleIndicatorText = "Watermark Rotation";
                   }
 
                   if (currentEditMode == EditMode.zoom) {
@@ -372,6 +379,10 @@ class _PreviewScreenState extends fm.State<PreviewScreen> {
                     value = _imageProcessBloc.zoomValue();
                     updateVal =
                         (newVal) => _imageProcessBloc.add(ZoomChange(newVal));
+
+                    leftIndicatorText = "Zoom Out";
+                    rightIndicatorText = "Zoom In";
+                    middleIndicatorText = "Watermark Zoom";
                   }
 
                   if (currentEditMode == EditMode.opacity) {
@@ -379,6 +390,10 @@ class _PreviewScreenState extends fm.State<PreviewScreen> {
                     value = _imageProcessBloc.opacityValue();
                     updateVal = (newVal) =>
                         _imageProcessBloc.add(OpacityChange(newVal));
+
+                    leftIndicatorText = "Transparent";
+                    rightIndicatorText = "Clear";
+                    middleIndicatorText = "Watermark Transparency";
                   }
 
                   if (currentEditMode == EditMode.quality) {
@@ -386,6 +401,10 @@ class _PreviewScreenState extends fm.State<PreviewScreen> {
                     divisions = 100;
                     updateVal = (newVal) =>
                         _imageProcessBloc.add(SetFinalProcessQuality(newVal));
+
+                    leftIndicatorText = "Low";
+                    rightIndicatorText = "High";
+                    middleIndicatorText = "Image Output Quality";
                   }
 
                   if (currentEditMode == EditMode.sizeReduction) {
@@ -393,37 +412,68 @@ class _PreviewScreenState extends fm.State<PreviewScreen> {
                     value = _imageProcessBloc.finalProcessingSizeReductionTo();
                     updateVal = (newVal) => _imageProcessBloc
                         .add(SetFinalProcessSizeReductionTo(newVal));
+
+                    leftIndicatorText = "Scale Down";
+                    rightIndicatorText = "Scale Up";
+                    middleIndicatorText = "Image Output Size Scaling";
                   }
 
-                  return fm.Row(
-                    mainAxisAlignment: fm.MainAxisAlignment.center,
-                    children: [
-                      fm.Text(
-                        min.toInt().toString(),
-                        style: const fm.TextStyle(
-                            fontSize: 16, color: fm.Color(0xfff56300)),
-                      ),
-                      fm.Expanded(
-                        child: fm.Slider(
-                          min: min,
-                          max: max,
-                          value: value,
-                          divisions: divisions,
-                          onChanged: updateVal,
-                          label: value.toInt().toString(),
-                          thumbColor: const fm.Color(0xfff56400),
-                          activeColor: const fm.Color(0xfff56400),
-                          inactiveColor: const fm.Color(0xffffffff),
-                          secondaryActiveColor: const fm.Color(0xffffffff),
+                  return fm.Column(children: [
+                    fm.Row(
+                      mainAxisAlignment: fm.MainAxisAlignment.center,
+                      children: [
+                        fm.Text(
+                          min.toInt().toString(),
+                          style: const fm.TextStyle(
+                              fontSize: 16, color: fm.Color(0xfff56300)),
                         ),
-                      ),
-                      fm.Text(
-                        max.toInt().toString(),
-                        style: const fm.TextStyle(
-                            fontSize: 16, color: fm.Color(0xfff56300)),
-                      ),
-                    ],
-                  );
+                        fm.Expanded(
+                          child: fm.Slider(
+                            min: min,
+                            max: max,
+                            value: value,
+                            divisions: divisions,
+                            onChanged: updateVal,
+                            label: value.toInt().toString(),
+                            thumbColor: const fm.Color(0xfff56400),
+                            activeColor: const fm.Color(0xfff56400),
+                            inactiveColor: const fm.Color(0xffffffff),
+                            secondaryActiveColor: const fm.Color(0xffffffff),
+                          ),
+                        ),
+                        fm.Text(
+                          max.toInt().toString(),
+                          style: const fm.TextStyle(
+                              fontSize: 16, color: fm.Color(0xfff56300)),
+                        ),
+                      ],
+                    ),
+                    fm.Row(
+                        crossAxisAlignment: fm.CrossAxisAlignment.center,
+                        mainAxisAlignment: fm.MainAxisAlignment.spaceBetween,
+                        children: [
+                            fm.Text(
+                                leftIndicatorText,
+                                style: const fm.TextStyle(
+                                    fontSize: 8, color: fm.Color(0xfff56300)
+                                )
+                            ),
+
+                            fm.Text(
+                                middleIndicatorText,
+                                style: const fm.TextStyle(
+                                    fontSize: 8, color: fm.Color(0xfff56300)
+                                )
+                            ),
+
+                            fm.Text(
+                                rightIndicatorText,
+                                style: const fm.TextStyle(
+                                    fontSize: 8, color: fm.Color(0xfff56300)
+                                )
+                            ),
+                        ]),
+                  ]);
                 },
               );
             }
